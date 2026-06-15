@@ -3212,7 +3212,9 @@ function SpellCompendium({ campaignId, playerName }) {
     try {
       const r=await fetch(url)
       const d=await r.json()
-      setSpells(prev=>append?[...prev,...(d.results||[])]:(d.results||[]))
+      const normalize=sp=>({...sp,school:schoolStr(sp.school)})
+      const results=(d.results||[]).map(normalize)
+      setSpells(prev=>append?[...prev,...results]:results)
       setNextUrl(d.next||null)
     } catch(e) {
       console.error('spell fetch',e)
