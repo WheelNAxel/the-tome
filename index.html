@@ -682,9 +682,36 @@ function importCampaignFromLink(b64) {
   } catch { return null }
 }
 
-const IS_SERVER = localStorage.getItem('tome_server') === '1'
+// ── Cloud config — paste your Supabase credentials here to enable cloud mode ──
+const SUPABASE_URL = ''      // e.g. 'https://abcxyz.supabase.co'
+const SUPABASE_ANON_KEY = '' // e.g. 'eyJhbGci...'
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Async API helper — only used in server mode
+const IS_CLOUD = !!(SUPABASE_URL && SUPABASE_ANON_KEY)
+const IS_SERVER = !IS_CLOUD && localStorage.getItem('tome_server') === '1'
+
+// SHA-256 in browser (matches server-side hashlib.sha256)
+async function hashPw(pw) {
+  if (!pw) return ''
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Supabase REST helper (no SDK needed)
+function sbFetch(method, table, body, params) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${table}${params ? '?' + params : ''}`, {
+    method,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation,resolution=merge-duplicates',
+    },
+    body: body ? JSON.stringify(body) : undefined
+  }).then(r => r.status === 204 ? [] : r.json())
+}
+
+// Async API helper — only used in local server mode
 async function api(method, path, body) {
   const res = await fetch(`/api/${path}`, {
     method,
@@ -694,22 +721,35 @@ async function api(method, path, body) {
   return res.json()
 }
 
-// Fire-and-forget campaign sync to server
+// Fire-and-forget campaign sync
 function syncCampaign(c) {
-  if (!IS_SERVER) return
-  api('PUT', `campaign/${c.id}`, c).catch(() => {})
+  if (IS_CLOUD) {
+    sbFetch('POST', 'campaigns', { id: c.id, dm_email: c.dmEmail, session_code: c.sessionCode, data: c }).catch(() => {})
+  } else if (IS_SERVER) {
+    api('PUT', `campaign/${c.id}`, c).catch(() => {})
+  }
 }
 
-// Fire-and-forget sheet sync to server
+// Fire-and-forget sheet sync
 function syncSheet(cid, name, sheet) {
-  if (!IS_SERVER) return
-  api('PUT', `sheet/${cid}/${encodeURIComponent(name)}`, { sheet }).catch(() => {})
+  if (IS_CLOUD) {
+    const key = `${cid}:${name}`
+    sbFetch('PATCH', 'players', { character_sheet: sheet }, `key=eq.${encodeURIComponent(key)}`).catch(() => {})
+  } else if (IS_SERVER) {
+    api('PUT', `sheet/${cid}/${encodeURIComponent(name)}`, { sheet }).catch(() => {})
+  }
 }
 
 const Storage = {
   // ── DM Auth ──────────────────────────────────────────────────────────────
-  // In server mode these are called as async; in local mode they're sync wrapped in promises
   register: async (email, pw, name) => {
+    if (IS_CLOUD) {
+      const rows = await sbFetch('GET', 'dms', null, `email=eq.${encodeURIComponent(email)}&select=email`)
+      if (rows.length) return { error: 'An account with this email already exists.' }
+      const hash = await hashPw(pw)
+      await sbFetch('POST', 'dms', { email, name, pw: hash })
+      save('tome_current_dm', { email, name }); return true
+    }
     if (IS_SERVER) {
       const r = await api('POST', 'dm/register', { email, password: pw, name })
       return r.ok ? true : { error: r.error }
@@ -717,7 +757,15 @@ const Storage = {
     const dms = load('tome_dms'); if(dms[email]) return { error: 'Email already registered' }
     dms[email]={pw,name}; save('tome_dms',dms); return true
   },
+
   login: async (email, pw) => {
+    if (IS_CLOUD) {
+      const hash = await hashPw(pw)
+      const rows = await sbFetch('GET', 'dms', null, `email=eq.${encodeURIComponent(email)}&select=*`)
+      if (!rows.length || rows[0].pw !== hash) return null
+      const dm = { email, name: rows[0].name }
+      save('tome_current_dm', dm); return dm
+    }
     if (IS_SERVER) {
       const r = await api('POST', 'dm/login', { email, password: pw })
       if (r.ok) { save('tome_current_dm', r.dm); return r.dm }
@@ -727,6 +775,7 @@ const Storage = {
     if(d[email]?.pw===pw){ const dm={email,name:d[email].name}; save('tome_current_dm',dm); return dm }
     return null
   },
+
   currentDM: () => load('tome_current_dm', null),
   logoutDM: () => localStorage.removeItem('tome_current_dm'),
   currentPlayer: () => load('tome_current_player', null),
@@ -740,30 +789,48 @@ const Storage = {
     syncCampaign(c)
   },
   deleteCampaign: async id => {
+    if (IS_CLOUD) {
+      await sbFetch('DELETE', 'players', null, `campaign_id=eq.${id}`)
+      await sbFetch('DELETE', 'campaigns', null, `id=eq.${id}`)
+    } else if (IS_SERVER) {
+      await api('DELETE', `campaign/${id}`)
+    }
     const cs=load('tome_campaigns'); delete cs[id]; save('tome_campaigns',cs)
-    if (IS_SERVER) await api('DELETE', `campaign/${id}`)
   },
   getCampaignByCode: code => Object.values(load('tome_campaigns')).find(c=>c.sessionCode.toUpperCase()===String(code).trim().toUpperCase()) || null,
 
   createCampaign: async (dmEmail, name) => {
+    if (IS_CLOUD) {
+      const used = await sbFetch('GET', 'campaigns', null, `dm_email=eq.${encodeURIComponent(dmEmail)}&select=session_code`)
+      const usedCodes = new Set((used||[]).map(r=>r.session_code))
+      let code; do { code=String(Math.floor(Math.random()*900000)+100000) } while(usedCodes.has(code))
+      const id = crypto.randomUUID()
+      const c = { id, dmEmail, name, sessionCode: code, createdAt: Date.now(), documents: [], players: {} }
+      await sbFetch('POST', 'campaigns', { id, dm_email: dmEmail, session_code: code, data: c })
+      const cs=load('tome_campaigns'); cs[id]=c; save('tome_campaigns',cs); return c
+    }
     if (IS_SERVER) {
       const r = await api('POST', 'campaign', { dmEmail, name })
       if (!r.ok) return null
       const c = r.campaign
-      const cs=load('tome_campaigns'); cs[c.id]=c; save('tome_campaigns',cs)
-      return c
+      const cs=load('tome_campaigns'); cs[c.id]=c; save('tome_campaigns',cs); return c
     }
     const c={id:genId(),dmEmail,name,sessionCode:genCode(),createdAt:Date.now(),documents:[],players:{}}
     const cs=load('tome_campaigns'); cs[c.id]=c; save('tome_campaigns',cs); return c
   },
 
-  // Sync campaigns: push any local-only campaigns up, pull server campaigns down
   syncCampaignsFromServer: async (dmEmail) => {
-    if (!IS_SERVER) return
-    // Push local campaigns that may not be on the server yet (e.g. created in file mode)
+    if (IS_CLOUD) {
+      const rows = await sbFetch('GET', 'campaigns', null, `dm_email=eq.${encodeURIComponent(dmEmail)}&select=data`)
+      if (!rows || rows.error) return []
+      const cs = load('tome_campaigns')
+      rows.forEach(r => { cs[r.data.id] = r.data })
+      save('tome_campaigns', cs)
+      return rows.map(r => r.data)
+    }
+    if (!IS_SERVER) return Object.values(load('tome_campaigns')).filter(c=>c.dmEmail===dmEmail)
     const localOwned = Object.values(load('tome_campaigns')).filter(c => c.dmEmail === dmEmail)
     await Promise.all(localOwned.map(c => api('PUT', `campaign/${c.id}`, c).catch(() => {})))
-    // Pull everything from server and merge into localStorage
     const r = await api('GET', `campaigns?dmEmail=${encodeURIComponent(dmEmail)}`)
     if (!r.ok) return
     const cs = load('tome_campaigns')
@@ -789,31 +856,44 @@ const Storage = {
     syncCampaign(c)
   },
 
-  // ── Player Join (server-aware, always async) ──────────────────────────────
+  // ── Player Join ───────────────────────────────────────────────────────────
   joinCampaign: async (code, name, password='') => {
+    if (IS_CLOUD) {
+      const rows = await sbFetch('GET', 'campaigns', null, `session_code=eq.${encodeURIComponent(code.trim().toUpperCase())}&select=*`)
+      if (!rows.length) return { error: 'Campaign not found. Check the code.' }
+      const camp = rows[0].data
+      const key = `${camp.id}:${name}`
+      const hash = await hashPw(password)
+      const existing = await sbFetch('GET', 'players', null, `key=eq.${encodeURIComponent(key)}&select=*`)
+      if (existing.length) {
+        if (existing[0].pw && existing[0].pw !== hash) return { error: 'Wrong password for this character name.' }
+      } else {
+        const sheet = emptySheet(name)
+        await sbFetch('POST', 'players', { key, campaign_id: camp.id, name, pw: hash, character_sheet: sheet })
+        if (!camp.players[name]) {
+          camp.players[name] = { joinedAt: Date.now() }
+          await sbFetch('POST', 'campaigns', { id: camp.id, dm_email: camp.dmEmail, session_code: camp.sessionCode, data: camp })
+        }
+      }
+      const sheet = existing.length ? existing[0].character_sheet : emptySheet(name)
+      const cs=load('tome_campaigns'); cs[camp.id]=camp; save('tome_campaigns',cs)
+      save(`tome_sheet_${camp.id}_${name}`, sheet)
+      const p = { name, campaignId: camp.id, campaignCode: camp.sessionCode }
+      save('tome_current_player', p); return { player: p }
+    }
     if (IS_SERVER) {
       const r = await api('POST', 'player/join', { code, name, password })
       if (!r.ok) return { error: r.error }
       const { player } = r
-      // Cache the campaign in localStorage so player view works offline/fast
       const campR = await api('GET', `campaign/${player.campaignId}`)
-      if (campR.ok) {
-        const cs = load('tome_campaigns'); cs[campR.campaign.id] = campR.campaign; save('tome_campaigns', cs)
-      }
-      // Cache sheet locally
+      if (campR.ok) { const cs=load('tome_campaigns'); cs[campR.campaign.id]=campR.campaign; save('tome_campaigns',cs) }
       save(`tome_sheet_${player.campaignId}_${name}`, player.characterSheet)
       const p = { name: player.name, campaignId: player.campaignId, campaignCode: player.campaignCode }
       save('tome_current_player', p); return { player: p }
     }
-    // Local mode
     const c=Storage.getCampaignByCode(code); if(!c) return { error: 'Campaign not found. Check the code with your DM.' }
-    if(!c.players[name]) {
-      c.players[name]={ joinedAt: Date.now() }
-      Storage.saveCampaign(c)
-    }
-    if(!load(`tome_sheet_${c.id}_${name}`, null)) {
-      save(`tome_sheet_${c.id}_${name}`, emptySheet(name))
-    }
+    if(!c.players[name]) { c.players[name]={ joinedAt: Date.now() }; Storage.saveCampaign(c) }
+    if(!load(`tome_sheet_${c.id}_${name}`, null)) save(`tome_sheet_${c.id}_${name}`, emptySheet(name))
     const p={name,campaignId:c.id,campaignCode:c.sessionCode}
     save('tome_current_player',p); return { player: p }
   },
@@ -826,28 +906,27 @@ const Storage = {
   getSheet: (cid, name) => {
     const cached = load(`tome_sheet_${cid}_${name}`, null)
     if (cached) return cached
-    // Legacy fallback: sheets were stored inside campaign.players
     return load('tome_campaigns')[cid]?.players?.[name]?.characterSheet || emptySheet(name)
   },
 
-  // Load all player sheets for a campaign from server (for DM Players tab)
   getPlayersWithSheets: async (cid) => {
+    if (IS_CLOUD) {
+      const rows = await sbFetch('GET', 'players', null, `campaign_id=eq.${cid}&select=name,character_sheet`)
+      if (!rows || rows.error) return {}
+      const result = {}
+      rows.forEach(r => { result[r.name] = r.character_sheet; save(`tome_sheet_${cid}_${r.name}`, r.character_sheet) })
+      return result
+    }
     if (IS_SERVER) {
       const r = await api('GET', `players/${cid}`)
       if (r.ok) {
-        Object.entries(r.players).forEach(([name, sheet]) => {
-          save(`tome_sheet_${cid}_${name}`, sheet)
-        })
+        Object.entries(r.players).forEach(([name, sheet]) => save(`tome_sheet_${cid}_${name}`, sheet))
         return r.players
       }
     }
-    // Local mode: sheets are keyed by name in campaign.players
-    const c = load('tome_campaigns')[cid]
-    if (!c) return {}
+    const c = load('tome_campaigns')[cid]; if(!c) return {}
     const result = {}
-    Object.keys(c.players||{}).forEach(name => {
-      result[name] = Storage.getSheet(cid, name)
-    })
+    Object.keys(c.players||{}).forEach(name => { result[name] = Storage.getSheet(cid, name) })
     return result
   },
 }
@@ -2699,9 +2778,10 @@ function App() {
     const d=Storage.currentDM(), p=Storage.currentPlayer()
 
     if(p){setPlayer(p);setView('player-view');return}
-    if(d && isLocal){setDm(d);setView('dm-dashboard');return}
+    // Cloud: DM can be on any device. Local server: only localhost is DM.
+    if(d && (IS_CLOUD || isLocal)){setDm(d);setView('dm-dashboard');return}
 
-    // Non-localhost on the server → player device, skip the landing page
+    // Local server non-localhost → player device, go straight to join
     if(IS_SERVER && !isLocal){setView('join');return}
   },[])
 
