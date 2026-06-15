@@ -3191,13 +3191,20 @@ function SpellCompendium({ campaignId, playerName }) {
 
   const searchRef=useRef('')
 
-  function buildUrl(reset=true) {
+  // Normalise school — v1 returns a string, guard against objects
+  function schoolStr(s) {
+    if(!s) return ''
+    if(typeof s === 'string') return s
+    return s.name || s.slug || ''
+  }
+
+  function buildUrl() {
     const params=new URLSearchParams()
     params.set('limit','50')
-    if(filterLevel!=='') params.set('level',filterLevel)
+    if(filterLevel!=='') params.set('spell_level',filterLevel)
     if(filterSchool) params.set('school',filterSchool.toLowerCase())
     if(search.trim()) params.set('search',search.trim())
-    return `https://api.open5e.com/v2/spells/?${params}`
+    return `https://api.open5e.com/v1/spells/?${params}`
   }
 
   async function fetchSpells(url, append=false) {
@@ -3217,7 +3224,7 @@ function SpellCompendium({ campaignId, playerName }) {
   },[search,filterLevel,filterSchool])
 
   function addSpell(sp) {
-    const entry={name:sp.name,level:sp.spell_level,school:sp.school?.name||sp.school||'',prepared:false}
+    const entry={name:sp.name,level:sp.spell_level??sp.level??0,school:schoolStr(sp.school),prepared:false}
     const sheet=Storage.getSheet(campaignId,playerName)
     const list=sheet.spellList||[]
     if(list.find(s=>s.name===sp.name)) return
@@ -3288,7 +3295,7 @@ function SpellCompendium({ campaignId, playerName }) {
         <div style={{flex:1,overflow:'auto',padding:'.5rem 1rem'}}>
           {loading&&!spells.length&&<div style={{color:'rgba(244,232,193,.4)',padding:'2rem',textAlign:'center'}}>Loading spells…</div>}
           {spells.map(sp=>{
-            const lvl=sp.spell_level; const school=SCHOOLS_DISPLAY[sp.school?.toLowerCase()]||sp.school||''
+            const lvl=sp.spell_level??sp.level??0; const school=schoolStr(sp.school)
             const already=inMySpells(sp.name)
             return (
               <div key={sp.slug||sp.name} className="spell-row-item" onClick={()=>setDetail(sp)}>
@@ -3318,14 +3325,14 @@ function SpellCompendium({ campaignId, playerName }) {
               <button className="btn btn-ghost btn-sm" onClick={()=>setDetail(null)}>✕</button>
             </div>
             <div style={{fontSize:'.78rem',color:'var(--gold-dark)',marginBottom:'1rem',fontStyle:'italic'}}>
-              {detail.spell_level===0?'Cantrip':`${detail.spell_level}${['','st','nd','rd'][detail.spell_level]||'th'}-level`} {SCHOOLS_DISPLAY[detail.school?.toLowerCase()]||detail.school}
+              {(detail.spell_level??detail.level??0)===0?'Cantrip':`${detail.spell_level??detail.level}${['','st','nd','rd'][detail.spell_level??detail.level]||'th'}-level`} {schoolStr(detail.school)}
               {detail.ritual&&' (ritual)'}{detail.concentration&&' (concentration)'}
             </div>
             {[['Casting Time',detail.casting_time],['Range',detail.range],['Components',detail.components],['Duration',detail.duration],['Classes',detail.dnd_class]].map(([k,v])=>v&&(
               <div key={k} style={{marginBottom:'.3rem',fontSize:'.83rem'}}><strong style={{color:'var(--gold-dark)'}}>{k}: </strong>{v}</div>
             ))}
             <div style={{marginTop:'1rem',lineHeight:1.7,fontSize:'.85rem',color:'rgba(244,232,193,.85)',borderTop:'1px solid rgba(201,168,76,.12)',paddingTop:'1rem'}}
-              dangerouslySetInnerHTML={{__html:(detail.desc||'').replace(/\n/g,'<br/>')}}/>
+              dangerouslySetInnerHTML={{__html:(detail.desc||detail.description||'').replace(/\n/g,'<br/>')}}/>
             {detail.higher_level&&<div style={{marginTop:'.75rem',fontSize:'.82rem',color:'rgba(244,232,193,.6)',fontStyle:'italic',borderTop:'1px solid rgba(201,168,76,.08)',paddingTop:'.75rem'}}><strong style={{color:'var(--gold-dark)'}}>At Higher Levels: </strong>{detail.higher_level}</div>}
             <button className={`btn ${inMySpells(detail.name)?'btn-ghost':'btn-primary'} btn-sm`} style={{marginTop:'1.25rem'}}
               onClick={()=>{if(!inMySpells(detail.name)){addSpell(detail);setDetail(null)}}}>
@@ -3381,7 +3388,12 @@ function PlayerView({ player, onLogout }) {
           {tab==='world'&&(
             <div className="player-layout">
               <div className="player-sidebar">
-                <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.75rem',textTransform:'uppercase'}}>Revealed Documents</div>
+                <div className="flex items-center justify-between" style={{marginBottom:'.75rem'}}>
+                  <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',letterSpacing:'.1em',color:'var(--gold-dark)',textTransform:'uppercase'}}>Revealed Documents</div>
+                  {IS_SERVER&&<button className="btn btn-ghost btn-sm" style={{fontSize:'.65rem',padding:'.1rem .4rem'}} onClick={()=>{
+                    api('GET',`campaign/${player.campaignId}`).then(r=>{if(r.ok){const cs=load('tome_campaigns');cs[r.campaign.id]=r.campaign;save('tome_campaigns',cs);setCampaign(r.campaign)}}).catch(()=>{})
+                  }}>⟳ Sync</button>}
+                </div>
                 {!revealed.length&&<div style={{fontSize:'.82rem',color:'rgba(244,232,193,.4)',fontStyle:'italic',fontFamily:'IM Fell English,serif'}}>The DM hasn't revealed any lore yet…</div>}
                 {CATEGORIES.map(cat=>{
                   const docs=grouped[cat];if(!docs.length)return null
