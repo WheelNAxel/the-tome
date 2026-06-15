@@ -89,12 +89,16 @@ def empty_sheet(name=''):
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
-        first = str(args[0]) if args else ''
-        parts = first.split()
-        method = parts[0] if parts else ''
-        path = parts[1] if len(parts) > 1 else ''
-        if '/api/' in path:
-            print(f'  {method} {path}  [{args[1]}]')
+        try:
+            first = str(args[0]) if args else ''
+            parts = first.split()
+            method = parts[0] if parts else ''
+            path = parts[1] if len(parts) > 1 else ''
+            if '/api/' in path:
+                status = str(args[1]) if len(args) > 1 else ''
+                print(f'  {method} {path}  [{status}]')
+        except Exception:
+            pass
 
     def cors(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -401,7 +405,11 @@ if __name__ == '__main__':
             webbrowser.open(f'http://localhost:{PORT}')
         except Exception:
             pass
-    server = HTTPServer(('0.0.0.0', PORT), Handler)
+    from socketserver import ThreadingMixIn
+    class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+
+    server = ThreadedHTTPServer(('0.0.0.0', PORT), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
