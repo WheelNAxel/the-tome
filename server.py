@@ -38,19 +38,26 @@ def _redis(method, path, body=None):
 
 
 def load():
+    data = None
     if REDIS_URL and REDIS_TOKEN:
         try:
             result = _redis('GET', f'get/{REDIS_KEY}').get('result')
             if result:
-                return json.loads(result)
+                data = json.loads(result)
         except Exception as e:
             print(f'  [redis] load error: {e}')
-    if DATA_FILE.exists():
+    if data is None and DATA_FILE.exists():
         try:
-            return json.loads(DATA_FILE.read_text(encoding='utf-8'))
+            data = json.loads(DATA_FILE.read_text(encoding='utf-8'))
         except Exception:
             pass
-    return {'campaigns': {}, 'dms': {}, 'players': {}}
+    # Validate — if corrupted or missing keys, reset to safe defaults
+    if not isinstance(data, dict):
+        data = {}
+    for key in ('campaigns', 'dms', 'players'):
+        if not isinstance(data.get(key), dict):
+            data[key] = {}
+    return data
 
 
 def dump(data):
