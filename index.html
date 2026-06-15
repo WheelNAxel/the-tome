@@ -1284,10 +1284,15 @@ function DMDashboard({ dm, onOpen, onLogout, onPlayerJoin }) {
 
   useEffect(()=>{
     if(!IS_SERVER){setSyncing(false);return}
-    Storage.syncCampaignsFromServer(dm.email)
-      .then(camps=>{ if(camps&&camps.length>0) setCampaigns(camps) })
-      .catch(()=>{})
-      .finally(()=>setSyncing(false))
+    function sync(){
+      Storage.syncCampaignsFromServer(dm.email)
+        .then(camps=>{ if(camps&&camps.length>0) setCampaigns(camps) })
+        .catch(()=>{})
+        .finally(()=>setSyncing(false))
+    }
+    sync()
+    const t=setInterval(sync,5000)
+    return ()=>clearInterval(t)
   },[])
 
   async function create(e){e.preventDefault();if(!newName.trim())return;const c=await Storage.createCampaign(dm.email,newName.trim());setNewName('');setCreating(false);if(c)refresh()}
@@ -2521,6 +2526,19 @@ function CampaignView({ dm, campaignId, onBack, onLogout, onPlayerJoin }) {
   const [campaign,setCampaign]=useState(()=>Storage.getCampaign(campaignId))
   const [tab,setTab]=useState('library')
   function refresh(){setCampaign(Storage.getCampaign(campaignId))}
+
+  useEffect(()=>{
+    if(!IS_SERVER) return
+    function sync(){
+      api('GET',`campaign/${campaignId}`).then(r=>{
+        if(r.ok){const cs=load('tome_campaigns');cs[r.campaign.id]=r.campaign;save('tome_campaigns',cs);setCampaign(r.campaign)}
+      }).catch(()=>{})
+    }
+    sync()
+    const t=setInterval(sync,5000)
+    return ()=>clearInterval(t)
+  },[campaignId])
+
   if(!campaign)return null
   return (
     <div className="app-shell">
@@ -2652,11 +2670,15 @@ function PlayerView({ player, onLogout }) {
   const [campaign,setCampaign]=useState(()=>Storage.getCampaign(player.campaignId))
 
   useEffect(()=>{
-    if(!campaign&&IS_SERVER){
+    if(!IS_SERVER) return
+    function sync(){
       api('GET',`campaign/${player.campaignId}`).then(r=>{
         if(r.ok){const cs=load('tome_campaigns');cs[r.campaign.id]=r.campaign;save('tome_campaigns',cs);setCampaign(r.campaign)}
       }).catch(()=>{})
     }
+    sync()
+    const t=setInterval(sync,5000)
+    return ()=>clearInterval(t)
   },[])
 
   if(!campaign)return<div className="landing"><h2 style={{color:'var(--gold)'}}>Loading campaign…</h2><button className="btn btn-ghost" style={{marginTop:'1rem'}} onClick={onLogout}>Back</button></div>
