@@ -89,8 +89,10 @@ def empty_sheet(name=''):
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
-        method = args[0].split()[0] if args else ''
-        path = args[0].split()[1] if args and len(args[0].split()) > 1 else ''
+        first = str(args[0]) if args else ''
+        parts = first.split()
+        method = parts[0] if parts else ''
+        path = parts[1] if len(parts) > 1 else ''
         if '/api/' in path:
             print(f'  {method} {path}  [{args[1]}]')
 
