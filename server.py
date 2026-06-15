@@ -61,14 +61,13 @@ def load():
 
 
 def dump(data):
-    serialized = json.dumps(data, ensure_ascii=False)
     if REDIS_URL and REDIS_TOKEN:
         try:
-            _redis('POST', f'set/{REDIS_KEY}', serialized)
+            _redis('POST', f'set/{REDIS_KEY}', data)
             return
         except Exception as e:
             print(f'  [redis] dump error: {e}')
-    DATA_FILE.write_text(serialized, encoding='utf-8')
+    DATA_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
 
 
 def hp(pw):
