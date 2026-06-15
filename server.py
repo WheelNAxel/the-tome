@@ -411,11 +411,7 @@ if __name__ == '__main__':
             webbrowser.open(f'http://localhost:{PORT}')
         except Exception:
             pass
-    from socketserver import ThreadingMixIn
-    class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-        daemon_threads = True
-
-    server = ThreadedHTTPServer(('0.0.0.0', PORT), Handler)
+    server = HTTPServer(('0.0.0.0', PORT), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
