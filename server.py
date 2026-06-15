@@ -5,11 +5,14 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 PORT = int(os.environ.get('PORT', 8000))
-# On cloud hosts, store data in /data volume (Railway/Render persistent disk).
-# Fall back to local file when running on the DM's machine.
-_data_dir = Path(os.environ.get('DATA_DIR', Path(__file__).parent))
-DATA_FILE = _data_dir / 'tome_data.json'
+DATA_FILE = Path(os.environ.get('DATA_DIR', Path(__file__).parent)) / 'tome_data.json'
 STATIC_DIR = Path(__file__).parent
+
+# Upstash Redis — used when env vars are set (cloud deployment).
+# Falls back to local JSON file when running on the DM's machine.
+REDIS_URL   = os.environ.get('UPSTASH_REDIS_REST_URL', '').rstrip('/')
+REDIS_TOKEN = os.environ.get('UPSTASH_REDIS_REST_TOKEN', '')
+REDIS_KEY   = 'tome_data'
 
 MIME = {
     '.html': 'text/html; charset=utf-8',
@@ -22,7 +25,26 @@ MIME = {
 }
 
 
+def _redis(method, path, body=None):
+    import urllib.request as ur
+    url = f'{REDIS_URL}/{path}'
+    data = json.dumps(body).encode() if body is not None else None
+    req = ur.Request(url, data=data, headers={
+        'Authorization': f'Bearer {REDIS_TOKEN}',
+        'Content-Type': 'application/json',
+    }, method=method)
+    with ur.urlopen(req, timeout=10) as r:
+        return json.loads(r.read())
+
+
 def load():
+    if REDIS_URL and REDIS_TOKEN:
+        try:
+            result = _redis('GET', f'get/{REDIS_KEY}').get('result')
+            if result:
+                return json.loads(result)
+        except Exception as e:
+            print(f'  [redis] load error: {e}')
     if DATA_FILE.exists():
         try:
             return json.loads(DATA_FILE.read_text(encoding='utf-8'))
@@ -32,7 +54,14 @@ def load():
 
 
 def dump(data):
-    DATA_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+    serialized = json.dumps(data, ensure_ascii=False)
+    if REDIS_URL and REDIS_TOKEN:
+        try:
+            _redis('POST', f'set/{REDIS_KEY}', serialized)
+            return
+        except Exception as e:
+            print(f'  [redis] dump error: {e}')
+    DATA_FILE.write_text(serialized, encoding='utf-8')
 
 
 def hp(pw):
