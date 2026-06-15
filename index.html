@@ -35,7 +35,7 @@
 :root{
   --gold:#C9A84C;--gold-light:#E8C96A;--gold-dark:#9A7A2E;
   --parchment:#F4E8C1;--parchment-dark:#E8D5A0;--parchment-edge:#C4A96A;
-  --ink:#2C1810;--ink-light:#5C3820;
+  --ink:#3B1A08;--ink-light:#6B3A18;
   --wood:#1C1209;--wood-mid:#2A1A0E;--wood-light:#3D2616;
   --forest:#1A2E1A;--forest-mid:#2A4A2A;
   --red:#8B1A1A;
@@ -63,7 +63,7 @@ h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
 .w-full{width:100%}
 .form-group{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.75rem}
 .form-label{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
-.parchment{background:radial-gradient(ellipse at 20% 10%,rgba(255,220,120,.18) 0%,transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(180,140,60,.15) 0%,transparent 50%),linear-gradient(160deg,#F0DFA0 0%,#EDD890 20%,#F4E8C1 45%,#EDD880 70%,#E8D090 100%);color:var(--ink);position:relative;overflow:hidden}
+.parchment{background:radial-gradient(ellipse at 20% 10%,rgba(255,240,180,.25) 0%,transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(210,170,80,.12) 0%,transparent 50%),linear-gradient(160deg,#FAF0C8 0%,#F5E9B0 20%,#FDF5DC 45%,#F5E8A8 70%,#F0E0B0 100%);color:var(--ink);position:relative;overflow:hidden}
 .parchment::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");opacity:.5;pointer-events:none}
 .parchment-edge{box-shadow:inset 0 0 40px rgba(150,100,20,.3),inset 4px 0 12px rgba(0,0,0,.15),inset -4px 0 12px rgba(0,0,0,.15),inset 0 4px 12px rgba(0,0,0,.12),inset 0 -4px 12px rgba(0,0,0,.12);border:2px solid var(--parchment-edge)}
 .parchment h1,.parchment h2,.parchment h3,.parchment h4{color:var(--ink);font-family:'Cinzel',serif}
