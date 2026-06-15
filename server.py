@@ -100,6 +100,12 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             pass
 
+    def do_HEAD(self):
+        # Render health checks use HEAD — respond 200 so the service stays live
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html')
+        self.end_headers()
+
     def cors(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
