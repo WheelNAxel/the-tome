@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1C1209"/>
+  <!-- Outer gold border frame -->
+  <rect x="20" y="20" width="472" height="472" fill="none" stroke="#C9A84C" stroke-width="6"/>
+  <rect x="32" y="32" width="448" height="448" fill="none" stroke="#9A7A2E" stroke-width="2"/>
+  <!-- Book body -->
+  <rect x="80" y="90" width="352" height="332" rx="4" fill="#2A1A0E" stroke="#C9A84C" stroke-width="3"/>
+  <!-- Book spine -->
+  <rect x="80" y="90" width="48" height="332" fill="#3D2616" stroke="#C9A84C" stroke-width="2"/>
+  <!-- Spine decoration lines -->
+  <line x1="104" y1="140" x2="104" y2="382" stroke="#C9A84C" stroke-width="1.5" opacity="0.6"/>
+  <!-- Page lines -->
+  <line x1="156" y1="160" x2="388" y2="160" stroke="#C9A84C" stroke-width="2" opacity="0.4"/>
+  <line x1="156" y1="195" x2="388" y2="195" stroke="#C9A84C" stroke-width="2" opacity="0.3"/>
+  <line x1="156" y1="230" x2="340" y2="230" stroke="#C9A84C" stroke-width="2" opacity="0.3"/>
+  <line x1="156" y1="265" x2="388" y2="265" stroke="#C9A84C" stroke-width="2" opacity="0.25"/>
+  <line x1="156" y1="300" x2="360" y2="300" stroke="#C9A84C" stroke-width="2" opacity="0.25"/>
+  <line x1="156" y1="335" x2="388" y2="335" stroke="#C9A84C" stroke-width="2" opacity="0.2"/>
+  <!-- Gold clasp in center of spine -->
+  <rect x="90" y="244" width="28" height="24" rx="2" fill="#C9A84C"/>
+  <rect x="94" y="248" width="20" height="16" rx="1" fill="#1C1209"/>
+  <circle cx="104" cy="256" r="4" fill="#C9A84C"/>
+  <!-- Top and bottom decorative lines -->
+  <line x1="60" y1="60" x2="452" y2="60" stroke="#C9A84C" stroke-width="1.5" opacity="0.5"/>
+  <line x1="60" y1="452" x2="452" y2="452" stroke="#C9A84C" stroke-width="1.5" opacity="0.5"/>
+  <!-- Corner diamonds -->
+  <polygon points="60,20 72,36 60,52 48,36" fill="#C9A84C"/>
+  <polygon points="452,20 464,36 452,52 440,36" fill="#C9A84C"/>
+  <polygon points="60,460 72,476 60,492 48,476" fill="#C9A84C"/>
+  <polygon points="452,460 464,476 452,492 440,476" fill="#C9A84C"/>
+</svg>

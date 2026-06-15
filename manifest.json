@@ -1,0 +1,20 @@
+{
+  "name": "The Tome — D&D 5e Companion",
+  "short_name": "The Tome",
+  "description": "A D&D 5e worldbuilding and campaign management companion.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1C1209",
+  "theme_color": "#1C1209",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["games", "entertainment", "utilities"],
+  "screenshots": []
+}

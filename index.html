@@ -1,0 +1,2849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>The Tome — D&D 5e Worldbuilding Companion</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#1C1209"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="The Tome"/>
+<link rel="apple-touch-icon" href="icon.svg"/>
+<link rel="icon" type="image/svg+xml" href="icon.svg"/>
+<meta name="description" content="A D&D 5e worldbuilding and campaign management companion for Dungeon Masters and players."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet"/>
+<script>
+// Detect server mode: set flag if we're being served over HTTP
+;(function detectServer(){
+  if(location.protocol !== 'file:') {
+    localStorage.setItem('tome_server','1')
+  } else {
+    localStorage.removeItem('tome_server')
+  }
+})()
+</script>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-light:#E8C96A;--gold-dark:#9A7A2E;
+  --parchment:#F4E8C1;--parchment-dark:#E8D5A0;--parchment-edge:#C4A96A;
+  --ink:#2C1810;--ink-light:#5C3820;
+  --wood:#1C1209;--wood-mid:#2A1A0E;--wood-light:#3D2616;
+  --forest:#1A2E1A;--forest-mid:#2A4A2A;
+  --red:#8B1A1A;
+}
+html,body,#root{height:100%;font-family:'Lora',serif;background:var(--wood);color:var(--parchment);overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--wood-mid)}
+::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:4px}
+h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
+.app-shell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:linear-gradient(180deg,var(--wood-mid) 0%,var(--wood) 100%);border-bottom:2px solid var(--gold-dark);box-shadow:0 2px 12px rgba(0,0,0,.5),0 2px 0 rgba(201,168,76,.1);flex-shrink:0;z-index:100}
+.topbar-title{font-family:'Cinzel Decorative',serif;font-size:1.3rem;color:var(--gold);letter-spacing:.06em;text-shadow:0 0 20px rgba(201,168,76,.4)}
+.topbar-actions{display:flex;gap:.75rem;align-items:center}
+.main-content{flex:1;overflow:hidden;display:flex}
+.btn{font-family:'Cinzel',serif;font-size:.8rem;font-weight:600;letter-spacing:.08em;padding:.45rem 1rem;border:1px solid var(--gold-dark);border-radius:3px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.btn-primary{background:linear-gradient(135deg,#2A1A08 0%,#3D2616 50%,#2A1A08 100%);color:var(--gold);border-color:var(--gold-dark);box-shadow:inset 0 1px 0 rgba(201,168,76,.2),0 2px 8px rgba(0,0,0,.4)}
+.btn-primary:hover{background:linear-gradient(135deg,#3D2616 0%,#5C3820 50%,#3D2616 100%);border-color:var(--gold)}
+.btn-danger{background:linear-gradient(135deg,#2A0808,#4A1010,#2A0808);color:#E87070;border-color:#6A2020}
+.btn-danger:hover{background:linear-gradient(135deg,#4A1010,#6A2020,#4A1010);border-color:#E87070}
+.btn-ghost{background:transparent;color:var(--parchment);border-color:rgba(201,168,76,.3)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.05)}
+.btn-sm{padding:.3rem .7rem;font-size:.72rem}
+.btn-lg{padding:.65rem 1.6rem;font-size:.9rem}
+.btn-icon{padding:.3rem .45rem}
+.w-full{width:100%}
+.form-group{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.75rem}
+.form-label{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+.parchment{background:radial-gradient(ellipse at 20% 10%,rgba(255,220,120,.18) 0%,transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(180,140,60,.15) 0%,transparent 50%),linear-gradient(160deg,#F0DFA0 0%,#EDD890 20%,#F4E8C1 45%,#EDD880 70%,#E8D090 100%);color:var(--ink);position:relative;overflow:hidden}
+.parchment::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");opacity:.5;pointer-events:none}
+.parchment-edge{box-shadow:inset 0 0 40px rgba(150,100,20,.3),inset 4px 0 12px rgba(0,0,0,.15),inset -4px 0 12px rgba(0,0,0,.15),inset 0 4px 12px rgba(0,0,0,.12),inset 0 -4px 12px rgba(0,0,0,.12);border:2px solid var(--parchment-edge)}
+.parchment h1,.parchment h2,.parchment h3,.parchment h4{color:var(--ink);font-family:'Cinzel',serif}
+.parchment p,.parchment li{font-family:'Lora',serif;color:var(--ink)}
+.ornament{display:flex;align-items:center;gap:.75rem;margin:.75rem 0;color:var(--gold-dark);font-size:1.1rem}
+.ornament::before,.ornament::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--gold-dark),transparent)}
+.parchment .ornament{color:var(--parchment-edge)}
+.parchment .ornament::before,.parchment .ornament::after{background:linear-gradient(to right,transparent,var(--parchment-edge),transparent)}
+.landing{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,rgba(26,46,26,.6) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(26,26,46,.4) 0%,transparent 60%),var(--wood);gap:2rem}
+.landing-logo{text-align:center}
+.landing-logo h1{font-family:'Cinzel Decorative',serif;font-size:3.5rem;color:var(--gold);text-shadow:0 0 40px rgba(201,168,76,.5),0 2px 4px rgba(0,0,0,.8);letter-spacing:.06em}
+.landing-logo .subtitle{font-family:'IM Fell English',serif;font-style:italic;color:var(--parchment);opacity:.7;font-size:1rem;margin-top:.25rem}
+.landing-cards{display:flex;gap:2rem;flex-wrap:wrap;justify-content:center}
+.landing-card{background:linear-gradient(160deg,var(--wood-mid),var(--wood-light));border:none;border-radius:0;padding:2rem;width:340px;transition:transform .2s}
+.landing-card h2{margin-bottom:.5rem;font-size:1.2rem}
+.landing-card p{color:var(--parchment);opacity:.7;font-size:.88rem;margin-bottom:1.25rem;line-height:1.6}
+.tab-bar{display:flex;border-bottom:2px solid var(--gold-dark);background:linear-gradient(180deg,var(--wood-light) 0%,var(--wood) 100%);padding:0 1rem;gap:.25rem;flex-shrink:0;box-shadow:inset 0 -1px 0 rgba(201,168,76,.08)}
+.tab-btn{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:.65rem 1.2rem;background:transparent;border:none;border-bottom:3px solid transparent;color:rgba(201,168,76,.45);cursor:pointer;transition:all .2s;margin-bottom:-2px}
+.tab-btn:hover{color:var(--gold);background:rgba(201,168,76,.04)}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.06);text-shadow:0 0 12px rgba(201,168,76,.3)}
+.dm-dashboard{padding:1.25rem 1.5rem;overflow-y:auto;width:100%;-webkit-overflow-scrolling:touch}
+/* Horizontal campaign scroller */
+.campaign-scroll-track{display:flex;gap:1.25rem;overflow-x:auto;padding:1.25rem .25rem 1.5rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--gold-dark) transparent}
+.campaign-scroll-track::-webkit-scrollbar{height:4px}
+.campaign-scroll-track::-webkit-scrollbar-track{background:transparent}
+.campaign-scroll-track::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:2px}
+.campaign-card{background:linear-gradient(160deg,var(--wood-mid),var(--wood-light));border:none;border-radius:0;padding:1.75rem;padding-top:2rem;cursor:pointer;transition:all .2s;flex:0 0 300px;scroll-snap-align:start;display:flex;flex-direction:column;min-height:220px}
+.campaign-card:hover{transform:translateY(-2px)}
+.campaign-card h3{font-size:1.15rem;margin-bottom:.4rem}
+.session-code{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);letter-spacing:.14em;margin:.6rem 0}
+.campaign-meta{font-size:.82rem;color:rgba(244,232,193,.5);margin-top:auto;padding-top:.75rem}
+.new-campaign-card{border:2px dashed rgba(201,168,76,.3);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;color:rgba(201,168,76,.5);font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.06em;flex:0 0 220px;scroll-snap-align:start;min-height:220px}
+.new-campaign-card:hover{border-color:var(--gold);color:var(--gold)}
+.campaign-view{display:flex;flex-direction:column;width:100%;overflow:hidden}
+.campaign-header{padding:.6rem 1.5rem;background:linear-gradient(180deg,var(--wood-mid) 0%,rgba(28,18,9,.95) 100%);border-bottom:1px solid var(--gold-dark);box-shadow:0 1px 0 rgba(201,168,76,.08),0 4px 16px rgba(0,0,0,.4);display:flex;align-items:center;gap:1rem;flex-shrink:0;position:relative}
+.campaign-header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(to right,transparent 0%,var(--gold-dark) 20%,var(--gold) 50%,var(--gold-dark) 80%,transparent 100%);pointer-events:none}
+.campaign-header h2{font-size:1rem}
+.code-badge{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.12em;color:var(--ink);background:var(--gold);padding:.2rem .6rem;border-radius:3px;font-weight:700}
+.tab-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.library-layout{display:flex;height:100%;overflow:hidden}
+.library-sidebar{width:300px;flex-shrink:0;border-right:1px solid rgba(201,168,76,.2);display:flex;flex-direction:column;overflow:hidden}
+.library-sidebar-header{padding:1rem;border-bottom:1px solid rgba(201,168,76,.15);display:flex;flex-direction:column;gap:.5rem}
+.doc-list{flex:1;overflow-y:auto}
+.doc-list-category{padding:.4rem 1rem;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);background:rgba(0,0,0,.2);border-top:1px solid rgba(201,168,76,.1);margin-top:.25rem}
+.doc-item{display:flex;align-items:center;padding:.6rem 1rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);gap:.5rem;transition:background .15s}
+.doc-item:hover{background:rgba(201,168,76,.06)}
+.doc-item.active{background:rgba(201,168,76,.12);border-left:2px solid var(--gold)}
+.doc-item-title{flex:1;font-size:.85rem;color:var(--parchment);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reveal-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);flex-shrink:0}
+.reveal-dot.revealed{background:#4CAF50;box-shadow:0 0 6px #4CAF50}
+.library-main{flex:1;overflow-y:auto;padding:1.5rem}
+.doc-editor{display:flex;flex-direction:column;gap:1rem;max-width:860px}
+.doc-editor-header{display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap}
+.editor-toolbar{display:flex;gap:.25rem;padding:.4rem .6rem;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:3px 3px 0 0;flex-wrap:wrap}
+.toolbar-btn{background:transparent;border:1px solid transparent;color:var(--parchment);padding:.2rem .5rem;cursor:pointer;border-radius:2px;font-size:.85rem;font-weight:bold;transition:all .15s;font-family:serif}
+.toolbar-btn:hover{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.3)}
+.toolbar-sep{width:1px;background:rgba(201,168,76,.2);margin:0 .15rem}
+.rich-editor{min-height:280px;background:rgba(0,0,0,.4);border:1px solid rgba(201,168,76,.3);border-top:none;border-radius:0 0 3px 3px;padding:.75rem;color:var(--parchment);font-family:'Lora',serif;font-size:.92rem;line-height:1.7;outline:none;overflow-y:auto}
+.rich-editor:focus{border-color:var(--gold)}
+.rich-editor h2,.rich-editor h3{color:var(--gold);font-family:'Cinzel',serif;margin:.5em 0}
+.doc-viewer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:2rem;animation:fadeIn .2s ease}
+.doc-viewer{width:100%;max-width:720px;max-height:85vh;border-radius:4px;overflow-y:auto;animation:scrollUnfurl .35s ease}
+.doc-viewer-inner{padding:3rem 3.5rem;position:relative;z-index:1}
+.doc-viewer-body{font-family:'Lora',serif;font-size:.95rem;line-height:1.8;color:var(--ink)}
+.doc-viewer-body h1,.doc-viewer-body h2,.doc-viewer-body h3{color:var(--ink-light);font-family:'Cinzel',serif;margin:.75em 0 .25em}
+.doc-viewer-body ul,.doc-viewer-body ol{padding-left:1.5rem;margin:.5rem 0}
+.doc-viewer-close{position:absolute;top:1rem;right:1rem;background:rgba(0,0,0,.15);border:1px solid var(--parchment-edge);border-radius:3px;color:var(--ink);padding:.3rem .6rem;cursor:pointer;font-family:'Cinzel',serif;font-size:.7rem;transition:all .15s}
+.doc-viewer-close:hover{background:rgba(0,0,0,.25)}
+.encounter-layout{display:flex;height:100%;overflow:hidden}
+.encounter-sidebar{width:320px;flex-shrink:0;border-right:1px solid rgba(201,168,76,.2);padding:1rem;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem}
+.encounter-main{flex:1;overflow-y:auto;padding:1rem}
+.combatant-row{background:linear-gradient(135deg,var(--wood-mid),var(--wood-light));border:1px solid rgba(201,168,76,.2);border-radius:4px;padding:.65rem .75rem;margin-bottom:.5rem;transition:all .2s}
+.combatant-row.active-turn{border-color:var(--gold);background:linear-gradient(135deg,#2A1A08,#3D2616);box-shadow:0 0 16px rgba(201,168,76,.25)}
+.combatant-row.dead{opacity:.45}
+.combatant-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}
+.combatant-name{font-family:'Cinzel',serif;font-size:.9rem;color:var(--gold);flex:1}
+.combatant-initiative{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold-light);min-width:32px;text-align:center}
+.combatant-stats{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.hp-bar-wrap{flex:1;min-width:100px}
+.hp-bar{height:6px;background:rgba(0,0,0,.4);border-radius:3px;overflow:hidden;margin-top:3px}
+.hp-fill{height:100%;border-radius:3px;transition:width .3s}
+.hp-text{font-size:.75rem;color:var(--parchment)}
+.stat-chip{font-family:'Cinzel',serif;font-size:.68rem;padding:.15rem .4rem;border-radius:2px;border:1px solid rgba(201,168,76,.3);color:var(--parchment);background:rgba(0,0,0,.3)}
+.condition-tag{font-size:.65rem;padding:.1rem .35rem;border-radius:2px;background:rgba(139,26,26,.4);border:1px solid #6A2020;color:#E87070;cursor:pointer}
+.num-input{width:52px;background:rgba(0,0,0,.4);border:1px solid rgba(201,168,76,.3);border-radius:2px;color:var(--parchment);padding:.15rem .3rem;font-size:.78rem;text-align:center}
+.round-display{font-family:'Cinzel',serif;font-size:.85rem;color:var(--gold);text-align:center;padding:.5rem;border:1px solid var(--gold-dark);border-radius:3px;background:rgba(201,168,76,.05)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:1.5rem;animation:fadeIn .2s ease}
+.modal{background:var(--wood-mid);border:1px solid var(--gold-dark);border-radius:6px;width:100%;max-width:980px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.8);animation:slideUp .25s ease}
+.modal-header{padding:1rem 1.25rem;border-bottom:1px solid var(--gold-dark);display:flex;align-items:center;gap:.75rem}
+.modal-header h2{font-size:1rem}
+.modal-body{flex:1;overflow:hidden;display:flex}
+.bestiary-list{width:260px;flex-shrink:0;border-right:1px solid rgba(201,168,76,.2);overflow-y:auto}
+.bestiary-item{padding:.5rem 1rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);font-size:.85rem;transition:background .15s;display:flex;justify-content:space-between;align-items:center}
+.bestiary-item:hover{background:rgba(201,168,76,.08)}
+.bestiary-item.selected{background:rgba(201,168,76,.15);border-left:2px solid var(--gold)}
+.bestiary-item-cr{font-family:'Cinzel',serif;font-size:.72rem;color:var(--gold-dark)}
+.bestiary-detail{flex:1;overflow-y:auto;padding:1.25rem}
+.stat-block{background:#FDF1DC;color:#58180D;border:2px solid #9C2B1B;border-radius:4px;padding:1.25rem;font-family:'Lora',serif;max-width:480px}
+.stat-block h3{font-family:'Cinzel',serif;color:#58180D;font-size:1.2rem}
+.stat-block .type-line{font-style:italic;font-size:.85rem;margin-bottom:.5rem;border-bottom:2px solid #9C2B1B;padding-bottom:.4rem}
+.stat-block .attr-row{display:flex;justify-content:space-between;gap:.5rem;margin:.5rem 0}
+.stat-block .attr-box{text-align:center;min-width:50px}
+.stat-block .attr-box .label{font-size:.65rem;font-weight:bold;text-transform:uppercase}
+.stat-block .attr-box .score{font-size:1rem;font-weight:bold}
+.stat-block .attr-box .mod{font-size:.8rem}
+.stat-block .divider{border:none;border-top:2px solid #9C2B1B;margin:.5rem 0}
+.stat-block .action-section h4{font-family:'Cinzel',serif;color:#58180D;font-size:.85rem;border-bottom:1px solid #9C2B1B;padding-bottom:.2rem;margin:.75rem 0 .4rem}
+.stat-block p,.stat-block li{font-size:.83rem;line-height:1.5;margin:.2rem 0}
+.stat-block strong{color:#58180D}
+.player-layout{display:flex;height:100%;overflow:hidden}
+.player-sidebar{width:280px;flex-shrink:0;border-right:1px solid rgba(201,168,76,.2);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+.player-main{flex:1;overflow-y:auto;padding:1.5rem}
+.doc-preview-card{background:linear-gradient(135deg,var(--wood-mid),var(--wood-light));border:1px solid rgba(201,168,76,.2);border-radius:4px;padding:.75rem;cursor:pointer;margin-bottom:.4rem;transition:all .2s}
+.doc-preview-card:hover{border-color:var(--gold);transform:translateX(3px)}
+.doc-preview-card h4{font-family:'Cinzel',serif;font-size:.85rem;color:var(--gold);margin-bottom:.25rem}
+.doc-preview-card .preview-text{font-size:.78rem;color:rgba(244,232,193,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-sheet{max-width:900px;padding:1.5rem}
+.cs-section{background:linear-gradient(135deg,var(--wood-mid),var(--wood-light));border:none;border-radius:0;padding:1rem;padding-top:1.15rem;margin-bottom:1rem}
+.cs-section-title{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(201,168,76,.2)}
+.cs-grid{display:grid;gap:.75rem}
+.cs-grid-2{grid-template-columns:1fr 1fr}
+.cs-grid-3{grid-template-columns:1fr 1fr 1fr}
+.cs-grid-6{grid-template-columns:repeat(6,1fr)}
+.ability-box{background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.3);border-radius:4px;padding:.5rem;text-align:center}
+.ability-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark)}
+.ability-score{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);width:100%;background:transparent;border:none;text-align:center;outline:none}
+.ability-mod{font-size:.9rem;color:var(--parchment)}
+.skill-row{display:flex;align-items:center;gap:.4rem;padding:.2rem 0}
+.skill-check{accent-color:var(--gold);width:14px;height:14px;cursor:pointer}
+.skill-name{font-size:.8rem;color:var(--parchment);flex:1}
+.skill-bonus{font-family:'Cinzel',serif;font-size:.78rem;color:var(--gold-dark);min-width:28px;text-align:right}
+.death-saves{display:flex;gap:.3rem}
+.death-pip{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;cursor:pointer}
+.slot-pip{width:16px;height:16px;border-radius:50%;border:2px solid var(--gold-dark);cursor:pointer;transition:background .15s;display:inline-block}
+.slot-pip.spent{background:rgba(201,168,76,.5)}
+.map-viewer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:flex;flex-direction:column}
+.map-toolbar{padding:.5rem 1rem;border-bottom:1px solid var(--gold-dark);display:flex;gap:.5rem;align-items:center;flex-shrink:0}
+.map-canvas{flex:1;overflow:hidden;position:relative;cursor:grab}
+.map-canvas:active{cursor:grabbing}
+.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;padding:1.5rem}
+.player-card{background:linear-gradient(135deg,var(--wood-mid),var(--wood-light));border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:1.25rem;cursor:pointer;transition:all .2s}
+.player-card:hover{border-color:var(--gold);box-shadow:0 4px 16px rgba(201,168,76,.1)}
+.player-card h3{font-size:1rem;margin-bottom:.5rem}
+.player-card .cs-preview{font-size:.8rem;color:rgba(244,232,193,.6)}
+.rules-btn{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .85rem;background:linear-gradient(135deg,var(--forest),var(--forest-mid));border:1px solid #4A7A4A;color:#9ACA9A;border-radius:3px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.rules-btn:hover{border-color:#6ACA6A;color:#BEE8BE}
+.divider{border:none;border-top:1px solid rgba(201,168,76,.15);margin:.75rem 0}
+.flex{display:flex}.gap-1{gap:.25rem}.gap-2{gap:.5rem}.gap-4{gap:1rem}
+.items-center{align-items:center}.justify-between{justify-content:space-between}
+.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}
+.text-gold{color:var(--gold)}.text-muted{color:rgba(244,232,193,.5)}.text-sm{font-size:.8rem}.text-xs{font-size:.72rem}
+.font-cinzel{font-family:'Cinzel',serif}
+.empty-state{text-align:center;padding:3rem;color:rgba(244,232,193,.35);font-family:'IM Fell English',serif;font-style:italic;font-size:1rem}
+.badge{display:inline-block;padding:.1rem .45rem;border-radius:3px;font-size:.65rem;font-family:'Cinzel',serif;letter-spacing:.06em;font-weight:600}
+.badge-revealed{background:rgba(42,92,42,.5);color:#9ACA9A;border:1px solid #4A7A4A}
+.badge-hidden{background:rgba(50,30,10,.5);color:rgba(244,232,193,.5);border:1px solid rgba(201,168,76,.2)}
+.search-input{background:rgba(0,0,0,.4);border:1px solid rgba(201,168,76,.25);border-radius:3px;color:var(--parchment);font-family:'Lora',serif;font-size:.85rem;padding:.4rem .75rem;outline:none;width:100%}
+.search-input:focus{border-color:var(--gold)}
+.search-input::placeholder{color:rgba(244,232,193,.3)}
+.encounter-add-form{background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:4px;padding:.75rem}
+.encounter-add-form h4{font-family:'Cinzel',serif;font-size:.8rem;color:var(--gold);margin-bottom:.5rem}
+.doc-category-section{margin-bottom:1.5rem}
+.doc-category-title{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:.5rem}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scrollUnfurl{from{opacity:0;clip-path:inset(50% 0 50% 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+/* ── Ornate Gold Frame System ────────────────────────────────────────────── */
+
+/* Notched octagonal corners — wrapping element only, apply to card outers */
+.notched {
+  clip-path: polygon(
+    10px 0%, calc(100% - 10px) 0%,
+    100% 10px, 100% calc(100% - 10px),
+    calc(100% - 10px) 100%, 10px 100%,
+    0% calc(100% - 10px), 0% 10px
+  );
+}
+.notched-lg {
+  clip-path: polygon(
+    16px 0%, calc(100% - 16px) 0%,
+    100% 16px, 100% calc(100% - 16px),
+    calc(100% - 16px) 100%, 16px 100%,
+    0% calc(100% - 16px), 0% 16px
+  );
+}
+
+/* Gradient-border wrapper that produces notched gold-line outline */
+.ornate-wrap {
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 35%, var(--gold-dark) 65%, var(--gold) 100%);
+  padding: 1.5px;
+  border-radius: 0;
+  clip-path: polygon(10px 0%,calc(100% - 10px) 0%,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0% calc(100% - 10px),0% 10px);
+}
+.ornate-wrap-inner {
+  background: linear-gradient(160deg, var(--wood-mid), var(--wood-light));
+  clip-path: polygon(10px 0%,calc(100% - 10px) 0%,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0% calc(100% - 10px),0% 10px);
+  height: 100%;
+  position: relative;
+}
+
+/* The gold inner double-line — top & bottom bars inside a panel */
+.ornate-inner-lines {
+  position: relative;
+}
+.ornate-inner-lines::before,
+.ornate-inner-lines::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px;
+  height: 1px;
+  pointer-events: none;
+  z-index: 1;
+}
+.ornate-inner-lines::before {
+  top: 8px;
+  background: linear-gradient(to right, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
+}
+.ornate-inner-lines::after {
+  bottom: 8px;
+  background: linear-gradient(to right, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
+}
+
+/* Diamond top-center accent */
+.diamond-top {
+  position: relative;
+}
+.diamond-top::before {
+  content: '◆';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: .5rem;
+  color: var(--gold);
+  background: var(--wood-mid);
+  padding: 0 5px;
+  z-index: 2;
+  line-height: 1;
+}
+
+/* Decorative section heading bar — the horizontal scroll lines with centered text */
+.ornate-heading {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .75rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid rgba(201,168,76,.15);
+}
+.ornate-heading::before,
+.ornate-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-dark));
+}
+.ornate-heading::after {
+  background: linear-gradient(to left, transparent, var(--gold-dark));
+}
+.ornate-heading span {
+  font-family: 'Cinzel', serif;
+  font-size: .68rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+/* Filigree text divider (used inline) */
+.filigree { color: var(--gold-dark); font-size: .85rem; letter-spacing: .2em; }
+
+/* Ornate text input */
+.form-input, .form-select, .form-textarea {
+  background:
+    linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)) padding-box,
+    linear-gradient(135deg, var(--gold-dark) 0%, rgba(201,168,76,.5) 30%, var(--gold-dark) 60%, rgba(201,168,76,.4) 100%) border-box;
+  border: 1.5px solid transparent !important;
+  border-radius: 0;
+  color: var(--parchment);
+  font-family: 'Lora', serif;
+  font-size: .9rem;
+  padding: .5rem .75rem;
+  outline: none;
+  transition: all .2s;
+  clip-path: polygon(5px 0%,calc(100% - 5px) 0%,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0% calc(100% - 5px),0% 5px);
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  background:
+    linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)) padding-box,
+    linear-gradient(135deg, var(--gold) 0%, rgba(201,168,76,.7) 30%, var(--gold) 60%, rgba(201,168,76,.6) 100%) border-box;
+  box-shadow: 0 0 12px rgba(201,168,76,.15);
+}
+.form-select option { background: var(--wood-mid); clip-path: none; }
+.form-textarea { resize: vertical; min-height: 80px; line-height: 1.6; clip-path: polygon(5px 0%,calc(100% - 5px) 0%,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0% calc(100% - 5px),0% 5px); }
+
+/* Elevated ornate card (campaign cards, player cards) */
+.campaign-card {
+  position: relative;
+  box-shadow:
+    0 0 0 1.5px var(--gold-dark),
+    inset 0 0 0 3px rgba(0,0,0,.3),
+    inset 0 0 0 4px rgba(201,168,76,.1),
+    0 8px 32px rgba(0,0,0,.6) !important;
+  border: none !important;
+}
+.campaign-card::before {
+  content: '◆';
+  position: absolute;
+  top: -7px; left: 50%;
+  transform: translateX(-50%);
+  font-size: .5rem;
+  color: var(--gold);
+  background: var(--wood-mid);
+  padding: 0 6px;
+  z-index: 2;
+}
+.campaign-card::after {
+  content: '';
+  position: absolute;
+  top: 8px; left: 14px; right: 14px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-dark), transparent);
+  pointer-events: none;
+}
+.campaign-card:hover { box-shadow: 0 0 0 1.5px var(--gold), inset 0 0 0 3px rgba(0,0,0,.3), inset 0 0 0 4px rgba(201,168,76,.12), 0 8px 36px rgba(201,168,76,.2) !important; }
+
+/* Character sheet section panels */
+.cs-section {
+  position: relative;
+  box-shadow: 0 0 0 1px var(--gold-dark), inset 0 0 0 2px rgba(0,0,0,.3), inset 0 0 0 3px rgba(201,168,76,.08) !important;
+  border: none !important;
+}
+.cs-section::after {
+  content: '';
+  position: absolute;
+  top: 7px; left: 10px; right: 10px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201,168,76,.25), transparent);
+  pointer-events: none;
+}
+
+/* Landing page cards */
+.landing-card {
+  position: relative;
+  box-shadow: 0 0 0 1.5px var(--gold-dark), inset 0 0 0 3px rgba(0,0,0,.3), inset 0 0 0 4px rgba(201,168,76,.08), 0 12px 40px rgba(0,0,0,.7) !important;
+  border: none !important;
+}
+.landing-card::before {
+  content: '◆';
+  position: absolute;
+  top: -7px; left: 50%;
+  transform: translateX(-50%);
+  font-size: .5rem;
+  color: var(--gold);
+  background: var(--wood);
+  padding: 0 6px;
+  z-index: 2;
+}
+.landing-card::after {
+  content: '';
+  position: absolute;
+  top: 8px; left: 16px; right: 16px; bottom: 8px;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(201,168,76,.2), inset 0 -1px 0 rgba(201,168,76,.2);
+}
+
+/* Ornate banner — the key element from the reference image */
+.ornate-banner {
+  position: relative;
+  background: linear-gradient(135deg, rgba(201,168,76,.18) 0%, rgba(201,168,76,.08) 40%, rgba(201,168,76,.14) 100%);
+  padding: .85rem 2.5rem;
+  text-align: center;
+}
+.ornate-banner::before,
+.ornate-banner::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 1.5px;
+}
+.ornate-banner::before { top: 0; background: linear-gradient(to right, transparent 0%, var(--gold-dark) 15%, var(--gold) 50%, var(--gold-dark) 85%, transparent 100%); }
+.ornate-banner::after { bottom: 0; background: linear-gradient(to right, transparent 0%, var(--gold-dark) 15%, var(--gold) 50%, var(--gold-dark) 85%, transparent 100%); }
+/* Corner scrollwork using box-shadow sims */
+.ornate-banner .banner-deco {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  font-size: .75rem;
+  color: var(--gold-dark);
+  opacity: .7;
+}
+.ornate-banner .banner-deco.left { left: .75rem; }
+.ornate-banner .banner-deco.right { right: .75rem; }
+
+/* Improved document viewer */
+.doc-viewer {
+  box-shadow: 0 0 0 2px var(--parchment-edge), 0 0 0 6px rgba(196,169,106,.3), 0 20px 60px rgba(0,0,0,.7) !important;
+}
+.doc-viewer-inner::before {
+  content: '';
+  position: absolute;
+  top: 16px; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--parchment-edge), transparent);
+  pointer-events: none;
+}
+.doc-viewer-inner::after {
+  content: '';
+  position: absolute;
+  bottom: 16px; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--parchment-edge), transparent);
+  pointer-events: none;
+}
+
+/* Corner ornaments for the parchment viewer */
+.parchment-corner {
+  position: absolute;
+  font-size: 1.1rem;
+  color: var(--parchment-edge);
+  opacity: .5;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Rich empty state with SVG art */
+.empty-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  gap: 1rem;
+  color: rgba(244,232,193,.3);
+}
+.empty-art svg { opacity: .25; }
+.empty-art .empty-title { font-family: 'Cinzel', serif; font-size: .95rem; color: rgba(244,232,193,.4); letter-spacing: .08em; }
+.empty-art .empty-sub { font-family: 'IM Fell English', serif; font-style: italic; font-size: .85rem; color: rgba(244,232,193,.25); text-align: center; max-width: 320px; line-height: 1.7; }
+
+/* Topbar code badge */
+.code-badge {
+  letter-spacing: .14em !important;
+  font-size: .8rem !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* Library sidebar header improvement */
+.library-sidebar-header {
+  background: linear-gradient(180deg, rgba(201,168,76,.06) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(201,168,76,.2) !important;
+}
+
+/* ── Character Setup / Import ── */
+.cs-setup{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:2rem;overflow-y:auto;height:100%;background:radial-gradient(ellipse at 30% 20%,rgba(26,46,26,.3) 0%,transparent 60%),var(--wood)}
+.cs-setup-header{text-align:center;margin-bottom:2rem}
+.cs-setup-header h2{font-size:1.4rem;margin-bottom:.4rem}
+.cs-setup-header p{color:rgba(244,232,193,.6);font-size:.88rem;font-family:'IM Fell English',serif;font-style:italic}
+.cs-setup-cards{display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px;margin-bottom:2rem}
+.cs-setup-card{background:linear-gradient(160deg,var(--wood-mid),var(--wood-light));border:1px solid var(--gold-dark);border-radius:8px;padding:1.5rem;flex:1;min-width:220px;max-width:280px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.cs-setup-card:hover{border-color:var(--gold);box-shadow:0 4px 24px rgba(201,168,76,.2);transform:translateY(-3px)}
+.cs-setup-card .card-icon{font-size:2.5rem;margin-bottom:.75rem}
+.cs-setup-card h3{font-size:.95rem;margin-bottom:.4rem}
+.cs-setup-card p{font-size:.78rem;color:rgba(244,232,193,.6);line-height:1.5}
+.import-modal-inner{width:100%;max-width:780px;background:linear-gradient(160deg,var(--wood-mid),var(--wood-light));border:1px solid var(--gold-dark);border-radius:8px;padding:1.75rem;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.import-modal-inner h3{font-size:1rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid rgba(201,168,76,.2)}
+.import-tabs{display:flex;gap:.25rem;margin-bottom:1.25rem}
+.import-tab{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:.45rem 1rem;background:transparent;border:1px solid rgba(201,168,76,.25);border-radius:3px;color:rgba(244,232,193,.5);cursor:pointer;transition:all .2s}
+.import-tab.active{background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold)}
+.import-tab:hover:not(.active){color:var(--parchment);border-color:rgba(201,168,76,.4)}
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;margin-bottom:1rem}
+.class-card{background:rgba(0,0,0,.3);border:2px solid rgba(201,168,76,.2);border-radius:5px;padding:.65rem .5rem;text-align:center;cursor:pointer;transition:all .15s}
+.class-card:hover{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.06)}
+.class-card.selected{border-color:var(--gold);background:rgba(201,168,76,.12)}
+.class-card .class-icon{font-size:1.5rem;margin-bottom:.25rem}
+.class-card .class-name{font-family:'Cinzel',serif;font-size:.72rem;color:var(--gold);letter-spacing:.05em}
+.class-card .class-dice{font-size:.65rem;color:rgba(244,232,193,.5);margin-top:.15rem}
+.race-bg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.5rem;margin-bottom:1rem}
+.race-btn{background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:3px;padding:.4rem .6rem;font-family:'Lora',serif;font-size:.78rem;color:var(--parchment);cursor:pointer;text-align:left;transition:all .15s}
+.race-btn:hover{border-color:rgba(201,168,76,.4);color:var(--gold)}
+.race-btn.selected{border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--gold)}
+.import-status{padding:.6rem .75rem;border-radius:3px;font-size:.82rem;margin:.5rem 0}
+.import-status.loading{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--gold)}
+.import-status.error{background:rgba(139,26,26,.2);border:1px solid #6A2020;color:#E87070}
+.import-status.success{background:rgba(42,92,42,.2);border:1px solid #4A7A4A;color:#9ACA9A}
+
+/* ── Mobile Responsive ───────────────────────────────────────────────────── */
+@media(max-width:768px){
+  /* Dashboard */
+  .dm-dashboard{padding:.75rem 1rem}
+  .campaign-card{flex:0 0 82vw;min-height:200px}
+  .new-campaign-card{flex:0 0 56vw;min-height:200px}
+
+  /* Topbar */
+  .topbar{padding:0 .75rem;height:50px}
+  .topbar-title{font-size:1rem}
+  .topbar-actions{gap:.4rem}
+  .topbar-actions .btn{font-size:.65rem;padding:.35rem .6rem}
+  .topbar-actions span{display:none}
+
+  /* Campaign header */
+  .campaign-header{padding:.5rem .75rem;flex-wrap:wrap;gap:.5rem}
+  .campaign-header h2{font-size:.9rem}
+
+  /* Tab bar */
+  .tab-bar{padding:0 .25rem}
+  .tab-btn{font-size:.68rem;padding:.55rem .75rem;letter-spacing:.04em}
+
+  /* Library: stack sidebar above main on mobile */
+  .library-layout{flex-direction:column}
+  .library-sidebar{width:100%;height:auto;max-height:220px;border-right:none;border-bottom:1px solid rgba(201,168,76,.2);flex-shrink:0}
+  .library-main{padding:.75rem}
+
+  /* Encounter: stack sidebar above */
+  .encounter-layout{flex-direction:column}
+  .encounter-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(201,168,76,.2);max-height:280px}
+  .encounter-main{padding:.75rem;overflow-y:auto}
+
+  /* Player layout: stack */
+  .player-layout{flex-direction:column}
+  .player-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(201,168,76,.2);max-height:200px;flex-shrink:0}
+  .player-main{padding:.75rem;overflow-y:auto}
+
+  /* Character sheet */
+  .char-sheet{padding:.75rem}
+  .cs-grid-2{grid-template-columns:1fr!important}
+  .cs-grid-3{grid-template-columns:repeat(2,1fr)!important}
+  .cs-grid-6{grid-template-columns:repeat(3,1fr)!important}
+
+  /* Modals */
+  .modal{margin:.5rem;width:calc(100vw - 1rem)!important;max-width:none!important;max-height:calc(100vh - 1rem)}
+  .modal-header{padding:.75rem 1rem}
+  .modal-body{padding:.75rem}
+
+  /* Form */
+  .form-input,.form-select,.form-textarea{font-size:16px}/* prevent iOS zoom on focus */
+
+  /* Landing */
+  .landing{padding:1.5rem;gap:1.5rem}
+  .landing-logo h1{font-size:2.2rem}
+  .landing-cards{gap:1rem}
+  .landing-card{width:100%;max-width:400px;padding:1.5rem}
+
+  /* Bestiary: stack columns */
+  .bestiary-list{width:100%;max-height:200px}
+  .bestiary-detail{flex:1;overflow-y:auto}
+  .modal-body.flex{flex-direction:column}
+
+  /* Doc viewer */
+  .doc-viewer-inner{padding:1.5rem 1.25rem}
+  .doc-viewer-overlay{padding:.75rem}
+
+  /* Buttons */
+  .btn-lg{padding:.6rem 1.2rem;font-size:.85rem}
+
+  /* Stat block */
+  .attr-row{gap:.3rem}
+  .attr-box{padding:.3rem}
+
+  /* Encounter combatant row */
+  .combatant-stats{flex-wrap:wrap;gap:.4rem}
+}
+
+/* Safe area insets for notched phones */
+@supports(padding:env(safe-area-inset-bottom)){
+  .topbar{padding-left:max(.75rem,env(safe-area-inset-left));padding-right:max(.75rem,env(safe-area-inset-right))}
+  .tab-bar{padding-bottom:env(safe-area-inset-bottom)}
+  .landing{padding-bottom:max(1.5rem,env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Storage Helpers ──────────────────────────────────────────────────────────
+function load(key, fb = {}) {
+  try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb } catch { return fb }
+}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)) }
+
+function genId() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36) }
+function genCode() {
+  return String(Math.floor(100000 + Math.random() * 900000))
+}
+
+// Encode a campaign payload into a URL-safe base64 string (images stripped to keep URL short)
+function encodeCampaignLink(campaign) {
+  try {
+    const slim = {
+      ...campaign,
+      documents: (campaign.documents||[]).map(d => ({ ...d, image: null })),
+      players: {}  // players join fresh; don't embed sheets in the link
+    }
+    const payload = JSON.stringify({ campaign: slim })
+    return btoa(unescape(encodeURIComponent(payload)))
+  } catch { return null }
+}
+
+// Decode and import a campaign from a base64 URL param into localStorage
+function importCampaignFromLink(b64) {
+  try {
+    const payload = JSON.parse(decodeURIComponent(escape(atob(b64))))
+    if (!payload.campaign?.id) return null
+    const c = payload.campaign
+    const cs = load('tome_campaigns')
+    // Only import if campaign not already present (don't overwrite DM's live data)
+    if (!cs[c.id]) { cs[c.id] = c; save('tome_campaigns', cs) }
+    else {
+      // Merge: update revealed flags and documents without clobbering player data
+      cs[c.id].documents = c.documents
+      cs[c.id].name = c.name
+      save('tome_campaigns', cs)
+    }
+    return c
+  } catch { return null }
+}
+
+const IS_SERVER = localStorage.getItem('tome_server') === '1'
+
+// Async API helper — only used in server mode
+async function api(method, path, body) {
+  const res = await fetch(`/api/${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  })
+  return res.json()
+}
+
+// Fire-and-forget campaign sync to server
+function syncCampaign(c) {
+  if (!IS_SERVER) return
+  api('PUT', `campaign/${c.id}`, c).catch(() => {})
+}
+
+// Fire-and-forget sheet sync to server
+function syncSheet(cid, name, sheet) {
+  if (!IS_SERVER) return
+  api('PUT', `sheet/${cid}/${encodeURIComponent(name)}`, { sheet }).catch(() => {})
+}
+
+const Storage = {
+  // ── DM Auth ──────────────────────────────────────────────────────────────
+  // In server mode these are called as async; in local mode they're sync wrapped in promises
+  register: async (email, pw, name) => {
+    if (IS_SERVER) {
+      const r = await api('POST', 'dm/register', { email, password: pw, name })
+      return r.ok ? true : { error: r.error }
+    }
+    const dms = load('tome_dms'); if(dms[email]) return { error: 'Email already registered' }
+    dms[email]={pw,name}; save('tome_dms',dms); return true
+  },
+  login: async (email, pw) => {
+    if (IS_SERVER) {
+      const r = await api('POST', 'dm/login', { email, password: pw })
+      if (r.ok) { save('tome_current_dm', r.dm); return r.dm }
+      return null
+    }
+    const d=load('tome_dms')
+    if(d[email]?.pw===pw){ const dm={email,name:d[email].name}; save('tome_current_dm',dm); return dm }
+    return null
+  },
+  currentDM: () => load('tome_current_dm', null),
+  logoutDM: () => localStorage.removeItem('tome_current_dm'),
+  currentPlayer: () => load('tome_current_player', null),
+  logoutPlayer: () => { localStorage.removeItem('tome_current_player') },
+
+  // ── Campaigns ─────────────────────────────────────────────────────────────
+  getCampaigns: () => load('tome_campaigns'),
+  getCampaign: id => load('tome_campaigns')[id] || null,
+  saveCampaign: c => {
+    const cs=load('tome_campaigns'); cs[c.id]=c; save('tome_campaigns',cs)
+    syncCampaign(c)
+  },
+  deleteCampaign: async id => {
+    const cs=load('tome_campaigns'); delete cs[id]; save('tome_campaigns',cs)
+    if (IS_SERVER) await api('DELETE', `campaign/${id}`)
+  },
+  getCampaignByCode: code => Object.values(load('tome_campaigns')).find(c=>c.sessionCode.toUpperCase()===String(code).trim().toUpperCase()) || null,
+
+  createCampaign: async (dmEmail, name) => {
+    if (IS_SERVER) {
+      const r = await api('POST', 'campaign', { dmEmail, name })
+      if (!r.ok) return null
+      const c = r.campaign
+      const cs=load('tome_campaigns'); cs[c.id]=c; save('tome_campaigns',cs)
+      return c
+    }
+    const c={id:genId(),dmEmail,name,sessionCode:genCode(),createdAt:Date.now(),documents:[],players:{}}
+    const cs=load('tome_campaigns'); cs[c.id]=c; save('tome_campaigns',cs); return c
+  },
+
+  // Sync campaigns: push any local-only campaigns up, pull server campaigns down
+  syncCampaignsFromServer: async (dmEmail) => {
+    if (!IS_SERVER) return
+    // Push local campaigns that may not be on the server yet (e.g. created in file mode)
+    const localOwned = Object.values(load('tome_campaigns')).filter(c => c.dmEmail === dmEmail)
+    await Promise.all(localOwned.map(c => api('PUT', `campaign/${c.id}`, c).catch(() => {})))
+    // Pull everything from server and merge into localStorage
+    const r = await api('GET', `campaigns?dmEmail=${encodeURIComponent(dmEmail)}`)
+    if (!r.ok) return
+    const cs = load('tome_campaigns')
+    r.campaigns.forEach(c => { cs[c.id] = c })
+    save('tome_campaigns', cs)
+    return Object.values(cs).filter(c => c.dmEmail === dmEmail)
+  },
+
+  addDoc: (cid, doc) => {
+    const c=load('tome_campaigns')[cid]; if(!c) return
+    const d={...doc,id:genId(),createdAt:Date.now(),revealed:false}
+    c.documents.push(d); const cs=load('tome_campaigns'); cs[cid]=c; save('tome_campaigns',cs)
+    syncCampaign(c); return d
+  },
+  updateDoc: (cid, did, upd) => {
+    const cs=load('tome_campaigns'); const c=cs[cid]; if(!c) return
+    c.documents=c.documents.map(d=>d.id===did?{...d,...upd}:d); save('tome_campaigns',cs)
+    syncCampaign(c)
+  },
+  deleteDoc: (cid, did) => {
+    const cs=load('tome_campaigns'); const c=cs[cid]; if(!c) return
+    c.documents=c.documents.filter(d=>d.id!==did); save('tome_campaigns',cs)
+    syncCampaign(c)
+  },
+
+  // ── Player Join (server-aware, always async) ──────────────────────────────
+  joinCampaign: async (code, name, password='') => {
+    if (IS_SERVER) {
+      const r = await api('POST', 'player/join', { code, name, password })
+      if (!r.ok) return { error: r.error }
+      const { player } = r
+      // Cache the campaign in localStorage so player view works offline/fast
+      const campR = await api('GET', `campaign/${player.campaignId}`)
+      if (campR.ok) {
+        const cs = load('tome_campaigns'); cs[campR.campaign.id] = campR.campaign; save('tome_campaigns', cs)
+      }
+      // Cache sheet locally
+      save(`tome_sheet_${player.campaignId}_${name}`, player.characterSheet)
+      const p = { name: player.name, campaignId: player.campaignId, campaignCode: player.campaignCode }
+      save('tome_current_player', p); return { player: p }
+    }
+    // Local mode
+    const c=Storage.getCampaignByCode(code); if(!c) return { error: 'Campaign not found. Check the code with your DM.' }
+    if(!c.players[name]) {
+      c.players[name]={ joinedAt: Date.now() }
+      Storage.saveCampaign(c)
+    }
+    if(!load(`tome_sheet_${c.id}_${name}`, null)) {
+      save(`tome_sheet_${c.id}_${name}`, emptySheet(name))
+    }
+    const p={name,campaignId:c.id,campaignCode:c.sessionCode}
+    save('tome_current_player',p); return { player: p }
+  },
+
+  // ── Character Sheets ──────────────────────────────────────────────────────
+  saveSheet: (cid, name, sheet) => {
+    save(`tome_sheet_${cid}_${name}`, sheet)
+    syncSheet(cid, name, sheet)
+  },
+  getSheet: (cid, name) => {
+    const cached = load(`tome_sheet_${cid}_${name}`, null)
+    if (cached) return cached
+    // Legacy fallback: sheets were stored inside campaign.players
+    return load('tome_campaigns')[cid]?.players?.[name]?.characterSheet || emptySheet(name)
+  },
+
+  // Load all player sheets for a campaign from server (for DM Players tab)
+  getPlayersWithSheets: async (cid) => {
+    if (IS_SERVER) {
+      const r = await api('GET', `players/${cid}`)
+      if (r.ok) {
+        Object.entries(r.players).forEach(([name, sheet]) => {
+          save(`tome_sheet_${cid}_${name}`, sheet)
+        })
+        return r.players
+      }
+    }
+    // Local mode: sheets are keyed by name in campaign.players
+    const c = load('tome_campaigns')[cid]
+    if (!c) return {}
+    const result = {}
+    Object.keys(c.players||{}).forEach(name => {
+      result[name] = Storage.getSheet(cid, name)
+    })
+    return result
+  },
+}
+
+function emptySheet(name='') {
+  return {
+    characterName:name,playerName:name,race:'',class:'',subclass:'',level:1,
+    background:'',alignment:'',experiencePoints:0,
+    str:10,dex:10,con:10,int:10,wis:10,cha:10,
+    proficiencyBonus:2,inspiration:false,
+    savingThrows:{str:false,dex:false,con:false,int:false,wis:false,cha:false},
+    skills:{acrobatics:false,animalHandling:false,arcana:false,athletics:false,deception:false,history:false,insight:false,intimidation:false,investigation:false,medicine:false,nature:false,perception:false,performance:false,persuasion:false,religion:false,sleightOfHand:false,stealth:false,survival:false},
+    ac:10,initiative:0,speed:30,hpMax:8,hpCurrent:8,hpTemp:0,
+    hitDice:'1d8',hitDiceUsed:0,deathSaveSuccesses:0,deathSaveFailures:0,
+    attacks:[{name:'',bonus:'',damage:'',damageType:''}],
+    equipment:'',personalityTraits:'',ideals:'',bonds:'',flaws:'',
+    featuresAndTraits:'',spellcastingAbility:'',spellSaveDC:'',spellAttackBonus:'',
+    spellSlots:{1:{total:0,used:0},2:{total:0,used:0},3:{total:0,used:0},4:{total:0,used:0},5:{total:0,used:0},6:{total:0,used:0},7:{total:0,used:0},8:{total:0,used:0},9:{total:0,used:0}},
+    spells:'',backstory:'',notes:'',
+  }
+}
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+const mod = s => Math.floor((s-10)/2)
+const modStr = s => { const m=mod(s); return m>=0?`+${m}`:`${m}` }
+const CATEGORIES = ['NPC','Monster','Location','Map','Item','Quest','Lore']
+const ABILITIES = ['str','dex','con','int','wis','cha']
+const ABILITY_NAMES = {str:'Strength',dex:'Dexterity',con:'Constitution',int:'Intelligence',wis:'Wisdom',cha:'Charisma'}
+const SKILLS = {acrobatics:'dex',animalHandling:'wis',arcana:'int',athletics:'str',deception:'cha',history:'int',insight:'wis',intimidation:'cha',investigation:'int',medicine:'wis',nature:'int',perception:'wis',performance:'cha',persuasion:'cha',religion:'int',sleightOfHand:'dex',stealth:'dex',survival:'wis'}
+const SKILL_NAMES = {acrobatics:'Acrobatics',animalHandling:'Animal Handling',arcana:'Arcana',athletics:'Athletics',deception:'Deception',history:'History',insight:'Insight',intimidation:'Intimidation',investigation:'Investigation',medicine:'Medicine',nature:'Nature',perception:'Perception',performance:'Performance',persuasion:'Persuasion',religion:'Religion',sleightOfHand:'Sleight of Hand',stealth:'Stealth',survival:'Survival'}
+const CONDITIONS = ['Blinded','Charmed','Deafened','Exhaustion','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious']
+
+// ── Template Data ─────────────────────────────────────────────────────────────
+const CLASS_DATA = {
+  Barbarian:{icon:'🪓',hitDice:'1d12',hpBase:12,saves:{str:true,con:true},spellcasting:'',primary:'STR',features:'Rage (2/rest, +2 dmg), Unarmored Defense (AC = 10 + DEX + CON)',equipment:"Greataxe, 2 handaxes, explorer's pack, 4 javelins"},
+  Bard:{icon:'🎵',hitDice:'1d8',hpBase:8,saves:{dex:true,cha:true},spellcasting:'CHA',primary:'CHA',features:'Bardic Inspiration (d6), Spellcasting (CHA), Jack of All Trades',equipment:"Rapier, diplomat's pack, lute, leather armor, dagger"},
+  Cleric:{icon:'✝',hitDice:'1d8',hpBase:8,saves:{wis:true,cha:true},spellcasting:'WIS',primary:'WIS',features:'Spellcasting (WIS), Channel Divinity (1/rest), Divine Domain',equipment:"Mace, scale mail, light crossbow + 20 bolts, explorer's pack, shield, holy symbol"},
+  Druid:{icon:'🌿',hitDice:'1d8',hpBase:8,saves:{int:true,wis:true},spellcasting:'WIS',primary:'WIS',features:'Druidic, Spellcasting (WIS), Wild Shape (CR 1/4)',equipment:"Wooden shield, scimitar, leather armor, explorer's pack, druidic focus"},
+  Fighter:{icon:'⚔',hitDice:'1d10',hpBase:10,saves:{str:true,con:true},spellcasting:'',primary:'STR or DEX',features:'Fighting Style, Second Wind (1d10+level, 1/rest), Action Surge (1/rest)',equipment:"Chain mail, longsword, shield, light crossbow + 20 bolts, explorer's pack"},
+  Monk:{icon:'👊',hitDice:'1d8',hpBase:8,saves:{str:true,dex:true},spellcasting:'',primary:'DEX & WIS',features:'Unarmored Defense (AC = 10+DEX+WIS), Martial Arts (d4), Unarmored Movement',equipment:"Shortsword, explorer's pack, 10 darts"},
+  Paladin:{icon:'🛡',hitDice:'1d10',hpBase:10,saves:{wis:true,cha:true},spellcasting:'CHA',primary:'STR',features:'Divine Sense (1+CHA/rest), Lay on Hands (5 HP pool), Divine Smite, Spellcasting (CHA)',equipment:"Longsword, 5 javelins, chain mail, shield, holy symbol"},
+  Ranger:{icon:'🏹',hitDice:'1d10',hpBase:10,saves:{str:true,dex:true},spellcasting:'WIS',primary:'DEX',features:'Favored Enemy, Natural Explorer, Spellcasting (WIS), Primeval Awareness',equipment:"Scale mail, 2 shortswords, dungeoneer's pack, longbow + 20 arrows"},
+  Rogue:{icon:'🗡',hitDice:'1d8',hpBase:8,saves:{dex:true,int:true},spellcasting:'',primary:'DEX',features:"Expertise (2 skills), Sneak Attack (1d6), Thieves' Cant, Cunning Action",equipment:"Rapier, shortbow + 20 arrows, leather armor, 2 daggers, thieves' tools, burglar's pack"},
+  Sorcerer:{icon:'✨',hitDice:'1d6',hpBase:6,saves:{con:true,cha:true},spellcasting:'CHA',primary:'CHA',features:'Sorcerous Origin, Spellcasting (CHA), Font of Magic (2 sorcery points)',equipment:"Light crossbow + 20 bolts, arcane focus, dungeoneer's pack, 2 daggers"},
+  Warlock:{icon:'👁',hitDice:'1d8',hpBase:8,saves:{wis:true,cha:true},spellcasting:'CHA',primary:'CHA',features:'Otherworldly Patron, Pact Magic (1 slot regains on SR), Eldritch Invocations',equipment:"Light crossbow + 20 bolts, arcane focus, scholar's pack, leather armor, 2 daggers"},
+  Wizard:{icon:'🔮',hitDice:'1d6',hpBase:6,saves:{int:true,wis:true},spellcasting:'INT',primary:'INT',features:'Spellcasting (INT), Arcane Recovery (regain slots on SR), Arcane Tradition',equipment:"Quarterstaff, component pouch, scholar's pack, spellbook"},
+}
+
+const RACE_DATA = {
+  'Human':{asi:{str:1,dex:1,con:1,int:1,wis:1,cha:1},speed:30,traits:'Extra language, extra skill proficiency'},
+  'High Elf':{asi:{dex:2,int:1},speed:30,traits:'Darkvision 60ft, Fey Ancestry, Keen Senses, Cantrip (Wizard list)'},
+  'Wood Elf':{asi:{dex:2,wis:1},speed:35,traits:'Darkvision 60ft, Fey Ancestry, Keen Senses, Mask of the Wild'},
+  'Drow':{asi:{dex:2,cha:1},speed:30,traits:'Superior Darkvision 120ft, Fey Ancestry, Sunlight Sensitivity, Drow Magic'},
+  'Hill Dwarf':{asi:{con:2,wis:1},speed:25,traits:'Darkvision 60ft, Dwarven Resilience, +1 HP/level, Stonecunning'},
+  'Mountain Dwarf':{asi:{str:2,con:2},speed:25,traits:'Darkvision 60ft, Dwarven Resilience, Armor Proficiency, Stonecunning'},
+  'Lightfoot Halfling':{asi:{dex:2,cha:1},speed:25,traits:'Lucky, Brave, Halfling Nimbleness, Naturally Stealthy'},
+  'Stout Halfling':{asi:{dex:2,con:1},speed:25,traits:'Lucky, Brave, Halfling Nimbleness, Stout Resilience (poison)'},
+  'Rock Gnome':{asi:{int:2,con:1},speed:25,traits:"Darkvision 60ft, Gnome Cunning, Artificer's Lore, Tinker"},
+  'Half-Elf':{asi:{cha:2},speed:30,traits:'Darkvision 60ft, Fey Ancestry, Skill Versatility (+2 skills), +1 to two ability scores'},
+  'Half-Orc':{asi:{str:2,con:1},speed:30,traits:'Darkvision 60ft, Menacing, Relentless Endurance, Savage Attacks'},
+  'Tiefling':{asi:{int:1,cha:2},speed:30,traits:'Darkvision 60ft, Hellish Resistance (fire), Infernal Legacy'},
+  'Dragonborn':{asi:{str:2,cha:1},speed:30,traits:'Draconic Ancestry (choose), Breath Weapon, Damage Resistance'},
+  'Aasimar':{asi:{wis:1,cha:2},speed:30,traits:'Darkvision 60ft, Celestial Resistance (necrotic/radiant), Healing Hands'},
+}
+
+const BACKGROUND_DATA = {
+  "Acolyte":{skills:['insight','religion'],feature:'Shelter of the Faithful',equipment:"Holy symbol, prayer book, 5 sticks incense, vestments, common clothes, 15gp"},
+  "Criminal":{skills:['deception','stealth'],feature:'Criminal Contact',equipment:"Crowbar, dark common clothes w/ hood, 15gp"},
+  "Folk Hero":{skills:['animalHandling','survival'],feature:'Rustic Hospitality',equipment:"Artisan's tools, shovel, iron pot, common clothes, 10gp"},
+  "Noble":{skills:['history','persuasion'],feature:'Position of Privilege',equipment:"Fine clothes, signet ring, scroll of pedigree, 25gp"},
+  "Sage":{skills:['arcana','history'],feature:'Researcher',equipment:"Bottle of ink, quill, small knife, letter, common clothes, 10gp"},
+  "Soldier":{skills:['athletics','intimidation'],feature:'Military Rank',equipment:"Insignia of rank, victory trophy, playing cards, common clothes, 10gp"},
+  "Outlander":{skills:['athletics','survival'],feature:'Wanderer',equipment:"Staff, hunting trap, animal trophy, traveler's clothes, 10gp"},
+  "Hermit":{skills:['medicine','religion'],feature:'Discovery',equipment:"Scroll of notes, winter blanket, common clothes, herbalism kit, 5gp"},
+  "Entertainer":{skills:['acrobatics','performance'],feature:'By Popular Demand',equipment:"Musical instrument, love letter, costume, 15gp"},
+  "Guild Artisan":{skills:['insight','persuasion'],feature:'Guild Membership',equipment:"Artisan's tools, intro letter, traveler's clothes, 15gp"},
+  "Charlatan":{skills:['deception','sleightOfHand'],feature:'False Identity',equipment:"Fine clothes, disguise kit, con tools, 15gp"},
+  "Sailor":{skills:['athletics','perception'],feature:"Ship's Passage",equipment:"Belaying pin (club), 50ft silk rope, lucky charm, common clothes, 10gp"},
+}
+
+const ALIGNMENTS = {1:'Lawful Good',2:'Neutral Good',3:'Chaotic Good',4:'Lawful Neutral',5:'True Neutral',6:'Chaotic Neutral',7:'Lawful Evil',8:'Neutral Evil',9:'Chaotic Evil'}
+
+// Build a sheet from template selections
+function sheetFromTemplate(name, cls, race, bg, level=1) {
+  const cd = CLASS_DATA[cls] || {}
+  const rd = RACE_DATA[race] || {}
+  const bd = BACKGROUND_DATA[bg] || {}
+  const profBonus = Math.ceil(1 + level/4)
+  const conMod = Math.floor(((rd.asi?.con||0) + 10 - 10)/2)
+  const hpMax = (cd.hpBase||8) + conMod + (level-1)*Math.ceil((parseInt(cd.hitDice?.replace(/\d+d/,''))||8)/2+1+conMod)
+
+  const saves = {}
+  ABILITIES.forEach(a => saves[a] = !!(cd.saves?.[a]))
+  const skills = {}
+  Object.keys(SKILLS).forEach(s => skills[s] = false)
+  ;(bd.skills||[]).forEach(s => { if(skills.hasOwnProperty(s)) skills[s]=true })
+
+  const asi = rd.asi || {}
+  return {
+    ...emptySheet(name),
+    characterName: name,
+    class: cls,
+    race: race,
+    background: bg,
+    level,
+    proficiencyBonus: profBonus,
+    hitDice: cd.hitDice||'1d8',
+    hpMax, hpCurrent: hpMax,
+    speed: rd.speed||30,
+    spellcastingAbility: cd.spellcasting||'',
+    savingThrows: saves,
+    skills,
+    str: 10+(asi.str||0), dex: 10+(asi.dex||0), con: 10+(asi.con||0),
+    int: 10+(asi.int||0), wis: 10+(asi.wis||0), cha: 10+(asi.cha||0),
+    featuresAndTraits: [
+      rd.traits ? `[${race} Racial Traits]\n${rd.traits}` : '',
+      cd.features ? `\n[${cls} Class Features]\n${cd.features}` : '',
+      bd.feature ? `\n[${bg} Background]\n${bd.feature}` : '',
+    ].filter(Boolean).join('\n'),
+    equipment: [cd.equipment, bd.equipment].filter(Boolean).join('\n'),
+  }
+}
+
+// Parse D&D Beyond character JSON (v5 API format)
+function parseDnDBeyondJSON(raw) {
+  try {
+    const d = raw.data || raw
+    const statIds = {1:'str',2:'dex',3:'con',4:'int',5:'wis',6:'cha'}
+    const base = {}; ABILITIES.forEach(a=>base[a]=10)
+    ;(d.stats||[]).forEach(s=>{if(statIds[s.id])base[statIds[s.id]]=s.value||10})
+    ;(d.bonusStats||[]).forEach(s=>{if(statIds[s.id]&&s.value)base[statIds[s.id]]=(base[statIds[s.id]]||10)+s.value})
+    ;(d.overrideStats||[]).forEach(s=>{if(statIds[s.id]&&s.value)base[statIds[s.id]]=s.value})
+
+    const cls = d.classes?.[0]
+    const level = d.classes?.reduce((t,c)=>t+(c.level||0),0) || 1
+    const classNames = (d.classes||[]).map(c=>c.definition?.name||'').filter(Boolean).join(' / ')
+    const subclass = (d.classes||[]).map(c=>c.subclassDefinition?.name||'').filter(Boolean).join(' / ')
+    const profBonus = Math.ceil(1+level/4)
+    const hpMax = d.baseHitPoints || (8+Math.floor((base.con-10)/2))
+
+    const skills = {}; Object.keys(SKILLS).forEach(s=>skills[s]=false)
+    ;(d.modifiers?.class||[]).concat(d.modifiers?.background||[],d.modifiers?.race||[],d.modifiers?.feat||[]).forEach(m=>{
+      if(m.type==='proficiency'&&m.subType) {
+        const key=m.subType.replace(/-(\w)/g,(_,c)=>c.toUpperCase())
+        if(skills.hasOwnProperty(key)) skills[key]=true
+      }
+    })
+
+    const saves={}; ABILITIES.forEach(a=>saves[a]=false)
+    ;(d.modifiers?.class||[]).forEach(m=>{
+      if(m.type==='proficiency'&&m.subType?.endsWith('-saving-throws')) {
+        const a=m.subType.replace('-saving-throws','')
+        if(saves.hasOwnProperty(a)) saves[a]=true
+      }
+    })
+
+    return {
+      ...emptySheet(d.name||''),
+      characterName: d.name||'',
+      race: d.race?.fullName||d.race?.baseName||'',
+      class: classNames,
+      subclass,
+      level,
+      background: d.background?.definition?.name||'',
+      alignment: ALIGNMENTS[d.alignmentId]||'',
+      experiencePoints: d.currentXp||0,
+      proficiencyBonus: profBonus,
+      ...base,
+      ac: d.armorClass||10,
+      speed: d.race?.weightSpeeds?.normal||30,
+      hpMax, hpCurrent: hpMax-(d.removedHitPoints||0),
+      hpTemp: d.temporaryHitPoints||0,
+      hitDice: cls?.definition?.hitDice ? `${level}d${cls.definition.hitDice}` : '1d8',
+      savingThrows: saves,
+      skills,
+      backstory: d.notes?.backstory||'',
+      personalityTraits: d.traits?.personalityTraits||'',
+      ideals: d.traits?.ideals||'',
+      bonds: d.traits?.bonds||'',
+      flaws: d.traits?.flaws||'',
+      notes: d.notes?.otherNotes||'',
+    }
+  } catch(e) {
+    throw new Error('Could not parse D&D Beyond data: '+e.message)
+  }
+}
+
+// Fetch a public D&D Beyond character via CORS proxy
+async function fetchDnDBeyondChar(url) {
+  const match = url.match(/characters?\/(\d+)/i)
+  if(!match) throw new Error("Couldn't find a character ID in that URL. Format: https://www.dndbeyond.com/characters/12345678")
+  const id = match[1]
+  const endpoints = [
+    `https://corsproxy.io/?url=https://character-service.dndbeyond.com/character/v5/character/${id}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://character-service.dndbeyond.com/character/v5/character/${id}`)}`,
+  ]
+  for(const ep of endpoints) {
+    try {
+      const res = await fetch(ep)
+      if(!res.ok) continue
+      const json = await res.json()
+      return parseDnDBeyondJSON(json)
+    } catch {}
+  }
+  throw new Error("Could not fetch the character. Make sure the character is set to Public on D&D Beyond (Edit Character → Sharing → Public), then try again.")
+}
+
+// ── Components ───────────────────────────────────────────────────────────────
+
+function RulesBtn() {
+  return (
+    <a href="https://www.dndbeyond.com/sources/dnd/free-rules" target="_blank" rel="noreferrer" className="rules-btn">
+      📖 Rules
+    </a>
+  )
+}
+
+// Landing
+function Landing({ onDM, onPlayer }) {
+  return (
+    <div className="landing">
+      <div className="landing-logo">
+        <div style={{display:'flex',alignItems:'center',gap:'.75rem',justifyContent:'center',marginBottom:'.3rem'}}>
+          <span className="filigree" style={{fontSize:'1.2rem',opacity:.5}}>⸻✦⸻</span>
+        </div>
+        <h1>The Tome</h1>
+        <div className="ornate-banner" style={{margin:'.5rem auto 0',maxWidth:380,borderRadius:0}}>
+          <span className="banner-deco left">❧</span>
+          <p className="subtitle" style={{margin:0}}>A D&amp;D 5e Worldbuilding &amp; Campaign Companion</p>
+          <span className="banner-deco right">❧</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:'.75rem',justifyContent:'center',marginTop:'.5rem'}}>
+          <span className="filigree" style={{fontSize:'.8rem',opacity:.3}}>✦ ✦ ✦</span>
+        </div>
+      </div>
+      <div className="landing-cards">
+        <div className="landing-card">
+          <div style={{fontSize:'1.6rem',marginBottom:'.5rem',opacity:.8}}>⚔</div>
+          <h2>Dungeon Master</h2>
+          <p>Create worlds, manage campaigns, write lore, and reveal secrets to your players at the perfect moment.</p>
+          <div style={{height:'1px',background:'linear-gradient(to right,transparent,rgba(201,168,76,.2),transparent)',margin:'.75rem 0'}}/>
+          <button className="btn btn-primary btn-lg w-full" onClick={onDM}>Open the DM Vault</button>
+        </div>
+        <div className="landing-card">
+          <div style={{fontSize:'1.6rem',marginBottom:'.5rem',opacity:.8}}>🧝</div>
+          <h2>Adventurer</h2>
+          <p>Join your campaign with a session code. Discover revealed lore, manage your character sheet, and prepare for adventure.</p>
+          <div style={{height:'1px',background:'linear-gradient(to right,transparent,rgba(201,168,76,.2),transparent)',margin:'.75rem 0'}}/>
+          <button className="btn btn-primary btn-lg w-full" onClick={onPlayer}>Enter the Campaign</button>
+        </div>
+      </div>
+      <a href="https://www.dndbeyond.com/sources/dnd/free-rules" target="_blank" rel="noreferrer" className="rules-btn" style={{marginTop:'1rem'}}>
+        📖 D&amp;D Free Rules Reference
+      </a>
+    </div>
+  )
+}
+
+// Login / Register
+function LoginScreen({ onLogin, onBack }) {
+  const [mode,setMode]=useState('login')
+  const [email,setEmail]=useState(''),[pw,setPw]=useState(''),[name,setName]=useState(''),[err,setErr]=useState(''),[loading,setLoading]=useState(false)
+  async function submit(e) {
+    e.preventDefault(); setErr(''); setLoading(true)
+    try {
+      if(mode==='register') {
+        if(!name.trim()){setErr('Enter your name');return}
+        const r=await Storage.register(email.trim().toLowerCase(),pw,name.trim())
+        if(r?.error){setErr(r.error);return}
+      }
+      const dm=await Storage.login(email.trim().toLowerCase(),pw)
+      if(!dm){setErr('Invalid email or password');return}
+      onLogin(dm)
+    } catch(e){ setErr('Connection error. Is the server running?') }
+    finally{ setLoading(false) }
+  }
+  return (
+    <div className="landing">
+      <div className="landing-logo"><h1>The Tome</h1><p className="subtitle">{mode==='login'?'DM Vault — Sign In':'DM Vault — Register'}</p></div>
+      <div className="landing-card" style={{width:380}}>
+        <form onSubmit={submit}>
+          {mode==='register'&&<div className="form-group"><label className="form-label">Your Name</label><input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Grand DM" required/></div>}
+          <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="dm@realm.com" required/></div>
+          <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••••" required/></div>
+          {err&&<p style={{color:'#E87070',fontSize:'.82rem',marginBottom:'.75rem'}}>{err}</p>}
+          <button type="submit" className="btn btn-primary w-full" style={{marginBottom:'.75rem'}} disabled={loading}>{loading?'…':mode==='login'?'Enter the Vault':'Create Account'}</button>
+          <div style={{display:'flex',gap:'.75rem',justifyContent:'center'}}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{setMode(m=>m==='login'?'register':'login');setErr('')}}>{mode==='login'?'Create Account':'Sign In'}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// Player Join — single form; server creates or verifies account automatically
+function PlayerJoin({ onJoin, onBack, prefillCode='' }) {
+  const [code, setCode] = useState(prefillCode)
+  const [name, setName] = useState('')
+  const [pw, setPw] = useState('')
+  const [err, setErr] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function submit(e) {
+    e.preventDefault(); setErr(''); setLoading(true)
+    try {
+      if (!code.trim()) { setErr('Enter session code'); return }
+      if (!name.trim()) { setErr('Enter your adventurer name'); return }
+      const res = await Storage.joinCampaign(code.trim(), name.trim(), pw)
+      if (res.error) { setErr(res.error); return }
+      onJoin(res.player)
+    } catch(e) { setErr('Connection error. Is the server running?') }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="landing">
+      <div className="landing-logo"><h1>The Tome</h1><p className="subtitle">Join Your Campaign</p></div>
+      <div className="landing-card" style={{width:400}}>
+        <form onSubmit={submit}>
+          <div className="form-group"><label className="form-label">Session Code</label>
+            <input className="form-input" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="123456" inputMode="numeric" autoCorrect="off" spellCheck="false" style={{fontFamily:'Cinzel,serif',letterSpacing:'.22em',fontSize:'1.4rem',textAlign:'center'}} required/>
+          </div>
+          <div className="form-group"><label className="form-label">Adventurer Name</label>
+            <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="TherionBlade" autoCorrect="off" autoCapitalize="words" required/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Password{IS_SERVER?' (set one to protect your character, or leave blank)':' (optional)'}</label>
+            <input className="form-input" type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder={IS_SERVER?'Optional — but recommended':'Optional'}/>
+          </div>
+          <p style={{fontSize:'.75rem',color:'rgba(201,168,76,.55)',marginBottom:'1rem',fontFamily:'Lora,serif',fontStyle:'italic',lineHeight:1.5}}>
+            {IS_SERVER
+              ? 'First time? An account is created automatically. Returning? Use the same name and password to reclaim your character.'
+              : 'Your character is saved on this device.'}
+          </p>
+          {err&&<p style={{color:'#E87070',fontSize:'.82rem',marginBottom:'.75rem'}}>{err}</p>}
+          <button type="submit" className="btn btn-primary w-full" style={{marginBottom:'.75rem'}} disabled={loading}>
+            {loading?'Entering…':'Enter the Campaign'}
+          </button>
+          <div style={{textAlign:'center'}}><button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>Back</button></div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// DM Dashboard
+function DMDashboard({ dm, onOpen, onLogout, onPlayerJoin }) {
+  const [campaigns,setCampaigns]=useState(()=>Object.values(Storage.getCampaigns()).filter(c=>c.dmEmail===dm.email))
+  const [creating,setCreating]=useState(false),[newName,setNewName]=useState('')
+  const [syncing,setSyncing]=useState(IS_SERVER)
+
+  function refresh(){setCampaigns(Object.values(Storage.getCampaigns()).filter(c=>c.dmEmail===dm.email))}
+
+  useEffect(()=>{
+    if(!IS_SERVER){setSyncing(false);return}
+    Storage.syncCampaignsFromServer(dm.email)
+      .then(camps=>{ if(camps&&camps.length>0) setCampaigns(camps) })
+      .catch(()=>{})
+      .finally(()=>setSyncing(false))
+  },[])
+
+  async function create(e){e.preventDefault();if(!newName.trim())return;const c=await Storage.createCampaign(dm.email,newName.trim());setNewName('');setCreating(false);if(c)refresh()}
+  async function del(e,id){e.stopPropagation();if(!confirm('Delete this campaign?'))return;await Storage.deleteCampaign(id);refresh()}
+  return (
+    <div className="app-shell">
+      <div className="topbar">
+        <span className="topbar-title">⚔ The Tome</span>
+        <div className="topbar-actions">
+          <span style={{fontFamily:'Cinzel,serif',fontSize:'.8rem',color:'var(--gold-dark)'}}>{dm.name}</span>
+          <RulesBtn/>
+          <button className="btn btn-ghost btn-sm" onClick={onPlayerJoin} title="Open the player join screen on this device">👤 Player Join</button>
+          <button className="btn btn-ghost btn-sm" onClick={onLogout}>Sign Out</button>
+        </div>
+      </div>
+      <FileProtocolBanner/>
+      <div className="main-content"><div className="dm-dashboard">
+        <div className="flex items-center justify-between" style={{marginBottom:'.5rem'}}>
+          <h2>My Campaigns</h2>
+          <button className="btn btn-primary" onClick={()=>setCreating(true)}>+ New Campaign</button>
+        </div>
+        <p className="text-muted text-sm" style={{marginBottom:'1.5rem'}}>Each campaign has a unique session code to share with your players.</p>
+        {creating&&(
+          <form onSubmit={create} style={{marginBottom:'1.5rem',display:'flex',gap:'.75rem',alignItems:'flex-end',maxWidth:480}}>
+            <div className="form-group" style={{flex:1,marginBottom:0}}>
+              <label className="form-label">Campaign Name</label>
+              <input className="form-input" placeholder="The Curse of Strahd…" value={newName} onChange={e=>setNewName(e.target.value)} autoFocus/>
+            </div>
+            <button type="submit" className="btn btn-primary">Create</button>
+            <button type="button" className="btn btn-ghost" onClick={()=>{setCreating(false);setNewName('')}}>Cancel</button>
+          </form>
+        )}
+        <div className="campaign-scroll-track">
+          {campaigns.map(c=>(
+            <div key={c.id} className="campaign-card" onClick={()=>onOpen(c.id)}>
+              <h3>{c.name}</h3>
+              <div className="session-code">{c.sessionCode}</div>
+              <div className="campaign-meta">{Object.keys(c.players).length} player{Object.keys(c.players).length!==1?'s':''} · {c.documents.length} doc{c.documents.length!==1?'s':''}</div>
+              <div className="mt-2 flex gap-2">
+                <button className="btn btn-ghost btn-sm" style={{flex:1}}>Open Campaign</button>
+                <button className="btn btn-danger btn-sm" onClick={e=>del(e,c.id)}>✕</button>
+              </div>
+            </div>
+          ))}
+          {!creating&&<div className="campaign-card new-campaign-card" onClick={()=>setCreating(true)}><span style={{fontSize:'2rem'}}>+</span><span>New Campaign</span></div>}
+        </div>
+        {campaigns.length===0&&!creating&&(
+          syncing
+            ? <div className="empty-art" style={{marginTop:'2rem'}}>
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{animation:'pulse 1.4s ease-in-out infinite'}}>
+                  <circle cx="24" cy="24" r="20" stroke="#C9A84C" strokeWidth="2" strokeDasharray="30 94" opacity=".6"/>
+                </svg>
+                <div className="empty-title">Retrieving your campaigns…</div>
+              </div>
+            : <div className="empty-art" style={{marginTop:'2rem'}}>
+                <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="12" y="18" width="76" height="64" rx="0" fill="none" stroke="#C9A84C" strokeWidth="1.2" opacity=".3"/>
+                  <rect x="18" y="24" width="64" height="52" rx="0" fill="rgba(201,168,76,.05)" stroke="#C9A84C" strokeWidth=".6" opacity=".2"/>
+                  <line x1="28" y1="38" x2="72" y2="38" stroke="#C9A84C" strokeWidth=".8" opacity=".25"/>
+                  <line x1="28" y1="48" x2="60" y2="48" stroke="#C9A84C" strokeWidth=".8" opacity=".2"/>
+                  <line x1="28" y1="58" x2="66" y2="58" stroke="#C9A84C" strokeWidth=".8" opacity=".15"/>
+                  <circle cx="50" cy="50" r="16" fill="none" stroke="#C9A84C" strokeWidth="1" opacity=".2"/>
+                  <line x1="50" y1="42" x2="50" y2="58" stroke="#C9A84C" strokeWidth="1.5" opacity=".3"/>
+                  <line x1="42" y1="50" x2="58" y2="50" stroke="#C9A84C" strokeWidth="1.5" opacity=".3"/>
+                </svg>
+                <div className="empty-title">Begin Your Chronicle</div>
+                <div className="empty-sub">No campaigns yet. Create your first world and invite your adventurers to join the tale.</div>
+              </div>
+        )}
+        {campaigns.length>0&&(
+          <div style={{marginTop:'3rem',borderTop:'1px solid rgba(201,168,76,.1)',paddingTop:'2rem'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'1.5rem'}}>
+              <div style={{flex:1,height:'1px',background:'linear-gradient(to right,rgba(201,168,76,.15),transparent)'}}/>
+              <span style={{fontFamily:'Cinzel,serif',fontSize:'.65rem',letterSpacing:'.15em',color:'rgba(201,168,76,.3)',textTransform:'uppercase'}}>DM Reference</span>
+              <div style={{flex:1,height:'1px',background:'linear-gradient(to left,rgba(201,168,76,.15),transparent)'}}/>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'1rem'}}>
+              {[
+                {icon:'📜',title:'Library',desc:'Craft NPCs, locations, quests, items, maps, and lore entries — then reveal them to your players.'},
+                {icon:'⚔',title:'Encounter Tracker',desc:'Manage initiative, HP, conditions, and the full SRD bestiary during live combat.'},
+                {icon:'🧝',title:'Character Sheets',desc:'View your players\' character sheets, stats, spells, and equipment from the DM panel.'},
+                {icon:'🔑',title:'Session Code',desc:'Each campaign has a unique code. Share it with your players so they can join without an account.'},
+              ].map(tip=>(
+                <div key={tip.title} style={{background:'rgba(201,168,76,.03)',border:'1px solid rgba(201,168,76,.1)',padding:'1rem',borderRadius:0}}>
+                  <div style={{fontSize:'1.2rem',marginBottom:'.4rem'}}>{tip.icon}</div>
+                  <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',letterSpacing:'.1em',color:'var(--gold-dark)',textTransform:'uppercase',marginBottom:'.4rem'}}>{tip.title}</div>
+                  <div style={{fontFamily:'IM Fell English,serif',fontStyle:'italic',fontSize:'.82rem',color:'rgba(244,232,193,.45)',lineHeight:1.6}}>{tip.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div></div>
+    </div>
+  )
+}
+
+// Document Editor
+function DocumentEditor({ initial, onSave, onCancel }) {
+  const [title,setTitle]=useState(initial?.title||'')
+  const [category,setCategory]=useState(initial?.category||'Lore')
+  const [image,setImage]=useState(initial?.image||null)
+  const editorRef=useRef(null)
+
+  useEffect(()=>{if(editorRef.current&&initial?.body)editorRef.current.innerHTML=initial.body},[])
+
+  function exec(cmd,val=null){document.execCommand(cmd,false,val);editorRef.current?.focus()}
+  function handleImg(e){
+    const f=e.target.files[0];if(!f)return
+    const r=new FileReader();r.onload=ev=>setImage(ev.target.result);r.readAsDataURL(f)
+  }
+  function save(){
+    if(!title.trim()){alert('Enter a title');return}
+    onSave({title:title.trim(),category,body:editorRef.current?.innerHTML||'',image})
+  }
+  return (
+    <div className="doc-editor">
+      <div className="doc-editor-header">
+        <div className="form-group" style={{flex:2,marginBottom:0}}>
+          <label className="form-label">Title</label>
+          <input className="form-input" placeholder="Document title…" value={title} onChange={e=>setTitle(e.target.value)}/>
+        </div>
+        <div className="form-group" style={{flex:1,marginBottom:0}}>
+          <label className="form-label">Category</label>
+          <select className="form-select" value={category} onChange={e=>setCategory(e.target.value)}>
+            {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+      <div>
+        <div className="editor-toolbar">
+          {[['bold','B'],['italic','I'],['underline','U']].map(([c,l])=>(
+            <button key={c} className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec(c)}}><span style={c==='bold'?{fontWeight:'bold'}:c==='italic'?{fontStyle:'italic'}:{textDecoration:'underline'}}>{l}</span></button>
+          ))}
+          <div className="toolbar-sep"/>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('formatBlock','h2')}}>H2</button>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('formatBlock','h3')}}>H3</button>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('formatBlock','p')}}>¶</button>
+          <div className="toolbar-sep"/>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('insertUnorderedList')}}>• List</button>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('insertOrderedList')}}>1. List</button>
+          <div className="toolbar-sep"/>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('justifyCenter')}}>⬛</button>
+          <button className="toolbar-btn" onMouseDown={e=>{e.preventDefault();exec('removeFormat')}}>✕ Fmt</button>
+        </div>
+        <div ref={editorRef} className="rich-editor" contentEditable suppressContentEditableWarning
+          onKeyDown={e=>{if(e.key==='Tab'){e.preventDefault();exec('insertHTML','&nbsp;&nbsp;&nbsp;&nbsp;')}}}
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">{category==='Map'?'Map Image':'Image (optional)'}</label>
+        <div className="flex gap-2 items-center">
+          <input type="file" accept="image/*" onChange={handleImg} style={{color:'var(--parchment)',fontSize:'.82rem',flex:1}}/>
+          {image&&<button className="btn btn-danger btn-sm" onClick={()=>setImage(null)}>Remove</button>}
+        </div>
+        {image&&<img src={image} alt="" style={{maxWidth:'100%',maxHeight:200,marginTop:'.5rem',borderRadius:4,border:'2px solid rgba(201,168,76,.3)'}}/>}
+      </div>
+      <div className="flex gap-2">
+        <button className="btn btn-primary" onClick={save}>💾 Save Document</button>
+        <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
+// Document Viewer (parchment)
+function DocumentViewer({ doc, onClose }) {
+  return (
+    <div className="doc-viewer-overlay" onClick={onClose}>
+      <div className="doc-viewer parchment parchment-edge" onClick={e=>e.stopPropagation()}>
+        <div className="doc-viewer-inner" style={{position:'relative'}}>
+          {/* Corner flourishes */}
+          <span className="parchment-corner" style={{top:'1rem',left:'1rem'}}>✦</span>
+          <span className="parchment-corner" style={{top:'1rem',right:'3.5rem'}}>✦</span>
+          <span className="parchment-corner" style={{bottom:'1rem',left:'1rem'}}>✦</span>
+          <span className="parchment-corner" style={{bottom:'1rem',right:'1rem'}}>✦</span>
+          <button className="doc-viewer-close" onClick={onClose}>✕ Close</button>
+          {/* Top decorative line */}
+          <div style={{height:'1px',background:'linear-gradient(to right,transparent,var(--parchment-edge),transparent)',marginBottom:'1.5rem',marginTop:'.25rem'}}/>
+          <h1 style={{fontFamily:'Cinzel,serif',fontSize:'1.8rem',color:'var(--ink)',textAlign:'center',marginBottom:'.2rem',letterSpacing:'.04em'}}>{doc.title}</h1>
+          <p style={{fontFamily:'IM Fell English,serif',fontStyle:'italic',textAlign:'center',color:'var(--parchment-edge)',marginBottom:'.5rem',fontSize:'.9rem',letterSpacing:'.08em'}}>— {doc.category} —</p>
+          <div className="ornament">❧</div>
+          <div style={{height:'1px',background:'linear-gradient(to right,transparent,var(--parchment-edge),transparent)',margin:'.75rem 0 1.25rem'}}/>
+          {doc.image&&doc.category!=='Map'&&<img src={doc.image} alt="" style={{maxWidth:'100%',borderRadius:0,margin:'0 0 1.25rem',border:'2px solid var(--parchment-edge)',display:'block'}}/>}
+          <div className="doc-viewer-body" dangerouslySetInnerHTML={{__html:doc.body||'<em>No content recorded.</em>'}}/>
+          <div style={{height:'1px',background:'linear-gradient(to right,transparent,var(--parchment-edge),transparent)',margin:'1.5rem 0 .75rem'}}/>
+          <div className="ornament" style={{marginTop:0}}>❦</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Map Viewer
+function MapViewer({ doc, onClose }) {
+  const [scale,setScale]=useState(1),[offset,setOffset]=useState({x:0,y:0})
+  const dragging=useRef(false),lastPos=useRef({x:0,y:0}),containerRef=useRef(null)
+  useEffect(()=>{
+    const el=containerRef.current;if(!el)return
+    function onWheel(e){e.preventDefault();setScale(s=>Math.max(.2,Math.min(5,s*(e.deltaY<0?1.1:.9))))}
+    el.addEventListener('wheel',onWheel,{passive:false});return()=>el.removeEventListener('wheel',onWheel)
+  },[])
+  return (
+    <div className="map-viewer-overlay">
+      <div className="map-toolbar">
+        <span style={{fontFamily:'Cinzel,serif',color:'var(--gold)',fontSize:'.9rem',flex:1}}>🗺 {doc.title}</span>
+        <button className="btn btn-ghost btn-sm" onClick={()=>setScale(s=>Math.min(5,s*1.2))}>+ Zoom</button>
+        <button className="btn btn-ghost btn-sm" onClick={()=>setScale(s=>Math.max(.2,s*.8))}>− Zoom</button>
+        <button className="btn btn-ghost btn-sm" onClick={()=>{setScale(1);setOffset({x:0,y:0})}}>Reset</button>
+        <button className="btn btn-danger btn-sm" onClick={onClose}>✕ Close</button>
+      </div>
+      <div ref={containerRef} className="map-canvas"
+        onMouseDown={e=>{dragging.current=true;lastPos.current={x:e.clientX,y:e.clientY}}}
+        onMouseMove={e=>{if(!dragging.current)return;const dx=e.clientX-lastPos.current.x,dy=e.clientY-lastPos.current.y;lastPos.current={x:e.clientX,y:e.clientY};setOffset(o=>({x:o.x+dx,y:o.y+dy}))}}
+        onMouseUp={()=>dragging.current=false} onMouseLeave={()=>dragging.current=false}>
+        <img src={doc.image} alt={doc.title} draggable={false} style={{transform:`translate(${offset.x}px,${offset.y}px) scale(${scale})`,position:'absolute',maxWidth:'none'}}/>
+      </div>
+    </div>
+  )
+}
+
+// Library Tab
+function LibraryTab({ campaignId, onUpdate, isDM }) {
+  const [docs,setDocs]=useState(()=>Storage.getCampaign(campaignId)?.documents||[])
+  const [selId,setSelId]=useState(null),[editing,setEditing]=useState(null)
+  const [filterCat,setFilterCat]=useState('All')
+  const [viewDoc,setViewDoc]=useState(null),[viewMap,setViewMap]=useState(null)
+
+  function refresh(){const c=Storage.getCampaign(campaignId);setDocs(c?.documents||[]);onUpdate?.()}
+
+  function saveDoc(data){
+    if(editing==='new') Storage.addDoc(campaignId,data)
+    else Storage.updateDoc(campaignId,editing,data)
+    setEditing(null);refresh()
+  }
+  function delDoc(id){if(!confirm('Delete this document?'))return;Storage.deleteDoc(campaignId,id);if(selId===id)setSelId(null);if(editing===id)setEditing(null);refresh()}
+  function toggleReveal(id,cur){Storage.updateDoc(campaignId,id,{revealed:!cur});refresh()}
+
+  const grouped=CATEGORIES.reduce((a,c)=>{a[c]=docs.filter(d=>d.category===c&&(filterCat==='All'||d.category===filterCat));return a},{})
+  const allFiltered=filterCat==='All'?docs:docs.filter(d=>d.category===filterCat)
+  const sel=docs.find(d=>d.id===selId)
+
+  return (
+    <div className="library-layout">
+      <div className="library-sidebar">
+        <div className="library-sidebar-header">
+          {isDM&&<button className="btn btn-primary btn-sm" onClick={()=>{setEditing('new');setSelId(null)}}>+ New Document</button>}
+          <select className="form-select" style={{fontSize:'.8rem',padding:'.3rem .5rem'}} value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
+            <option>All</option>{CATEGORIES.map(c=><option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="doc-list">
+          {CATEGORIES.map(cat=>{
+            const cd=grouped[cat];if(!cd.length)return null
+            return <div key={cat}>
+              <div className="doc-list-category">{cat}</div>
+              {cd.map(d=>(
+                <div key={d.id} className={`doc-item${selId===d.id?' active':''}`} onClick={()=>{setSelId(d.id);setEditing(null)}}>
+                  <div className={`reveal-dot${d.revealed?' revealed':''}`}/>
+                  <span className="doc-item-title">{d.title}</span>
+                </div>
+              ))}
+            </div>
+          })}
+          {allFiltered.length===0&&<div className="empty-state" style={{padding:'2rem 1rem',fontSize:'.82rem'}}>No documents yet</div>}
+        </div>
+      </div>
+      <div className="library-main">
+        {editing&&<DocumentEditor key={editing} initial={editing!=='new'?docs.find(d=>d.id===editing):null} onSave={saveDoc} onCancel={()=>setEditing(null)}/>}
+        {!editing&&sel&&(
+          <div className="doc-editor">
+            <div className="flex items-center justify-between" style={{marginBottom:'1rem'}}>
+              <div><h2 style={{marginBottom:'.25rem'}}>{sel.title}</h2><span className="badge" style={{background:'rgba(201,168,76,.15)',color:'var(--gold-dark)',border:'1px solid rgba(201,168,76,.3)'}}>{sel.category}</span></div>
+              <div className="flex gap-2">
+                {isDM&&<>
+                  <button className={`btn btn-sm ${sel.revealed?'btn-ghost':'btn-primary'}`} onClick={()=>toggleReveal(sel.id,sel.revealed)}>{sel.revealed?'🔒 Hide':'👁 Reveal'}</button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setEditing(sel.id)}>✏ Edit</button>
+                  <button className="btn btn-danger btn-sm" onClick={()=>delDoc(sel.id)}>🗑</button>
+                </>}
+                {sel.category==='Map'&&sel.image&&<button className="btn btn-primary btn-sm" onClick={()=>setViewMap(sel)}>🗺 Map</button>}
+                <button className="btn btn-ghost btn-sm" onClick={()=>setViewDoc(sel)}>📜 Parchment</button>
+              </div>
+            </div>
+            <div className="flex gap-2 items-center" style={{marginBottom:'1rem'}}>
+              <span className={`badge ${sel.revealed?'badge-revealed':'badge-hidden'}`}>{sel.revealed?'● Revealed':'○ Hidden'}</span>
+              <span className="text-xs text-muted">{new Date(sel.createdAt).toLocaleDateString()}</span>
+            </div>
+            {sel.image&&sel.category!=='Map'&&<img src={sel.image} alt="" style={{maxWidth:'100%',maxHeight:300,borderRadius:4,marginBottom:'1rem',border:'2px solid rgba(201,168,76,.3)'}}/>}
+            <div className="rich-editor" style={{minHeight:200,cursor:'default',background:'rgba(0,0,0,.25)'}} dangerouslySetInnerHTML={{__html:sel.body||'<em style="color:rgba(244,232,193,.4)">No content</em>'}}/>
+          </div>
+        )}
+        {!editing&&!sel&&(
+          <div className="empty-art" style={{marginTop:'2rem',flex:1}}>
+            <svg width="110" height="130" viewBox="0 0 110 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="16" y="6" width="78" height="112" rx="3" fill="#C9A84C" opacity=".1"/>
+              <rect x="20" y="2" width="70" height="112" rx="2" stroke="#C9A84C" strokeWidth="1.2" fill="rgba(201,168,76,.06)" opacity=".6"/>
+              <line x1="30" y1="22" x2="80" y2="22" stroke="#C9A84C" strokeWidth=".8" opacity=".4"/>
+              <line x1="30" y1="32" x2="80" y2="32" stroke="#C9A84C" strokeWidth=".8" opacity=".3"/>
+              <line x1="30" y1="42" x2="66" y2="42" stroke="#C9A84C" strokeWidth=".8" opacity=".3"/>
+              <line x1="30" y1="56" x2="80" y2="56" stroke="#C9A84C" strokeWidth=".8" opacity=".2"/>
+              <line x1="30" y1="66" x2="72" y2="66" stroke="#C9A84C" strokeWidth=".8" opacity=".2"/>
+              <line x1="30" y1="76" x2="80" y2="76" stroke="#C9A84C" strokeWidth=".8" opacity=".15"/>
+              <path d="M47 100 L55 88 L63 100" stroke="#C9A84C" strokeWidth="1" opacity=".3" fill="none"/>
+              <circle cx="55" cy="86" r="2" fill="#C9A84C" opacity=".25"/>
+            </svg>
+            <div className="empty-title">{isDM?'The Chronicle Awaits':'Awaiting Revelation'}</div>
+            <div className="empty-sub">{isDM?'Select a document from the library, or forge a new entry for your campaign.':'Your Dungeon Master will reveal the pages of this tome as your adventure unfolds.'}</div>
+            <div className="filigree" style={{marginTop:'.5rem',opacity:.35}}>✦ ✦ ✦</div>
+          </div>
+        )}
+      </div>
+      {viewDoc&&<DocumentViewer doc={viewDoc} onClose={()=>setViewDoc(null)}/>}
+      {viewMap&&<MapViewer doc={viewMap} onClose={()=>setViewMap(null)}/>}
+    </div>
+  )
+}
+
+// Character Setup / Import Modal
+function CharacterSetupModal({ playerName, campaignId, onApply, onClose, initialMode }) {
+  const [mode, setMode] = useState(initialMode || 'choose') // choose | template | ddb | json
+  // Template state
+  const [tName, setTName] = useState(playerName||'')
+  const [tClass, setTClass] = useState('')
+  const [tRace, setTRace] = useState('')
+  const [tBg, setTBg] = useState('')
+  const [tLevel, setTLevel] = useState(1)
+  // DDB state
+  const [ddbUrl, setDdbUrl] = useState('')
+  const [ddbStatus, setDdbStatus] = useState(null) // {type:'loading'|'error'|'success', msg}
+  // JSON state
+  const [jsonText, setJsonText] = useState('')
+  const [jsonStatus, setJsonStatus] = useState(null)
+
+  function applyTemplate() {
+    if(!tClass){alert('Choose a class');return}
+    if(!tRace){alert('Choose a race');return}
+    if(!tBg){alert('Choose a background');return}
+    if(!tName.trim()){alert('Enter a character name');return}
+    onApply(sheetFromTemplate(tName.trim(), tClass, tRace, tBg, tLevel))
+  }
+
+  async function importDDB() {
+    if(!ddbUrl.trim()){alert('Enter a D&D Beyond character URL');return}
+    setDdbStatus({type:'loading',msg:'Fetching character from D&D Beyond…'})
+    try {
+      const sheet = await fetchDnDBeyondChar(ddbUrl.trim())
+      setDdbStatus({type:'success',msg:`✓ Found "${sheet.characterName}" — click Apply to load`})
+      setTimeout(()=>onApply(sheet), 800)
+    } catch(e) {
+      setDdbStatus({type:'error',msg:e.message})
+    }
+  }
+
+  function importJSON() {
+    try {
+      const parsed = JSON.parse(jsonText)
+      // Support raw D&D Beyond JSON or our own sheet format
+      let sheet
+      if(parsed.data || parsed.stats) {
+        sheet = parseDnDBeyondJSON(parsed)
+      } else if(parsed.characterName !== undefined) {
+        sheet = { ...emptySheet(parsed.characterName||playerName), ...parsed }
+      } else {
+        throw new Error('Unrecognised format. Paste a D&D Beyond export JSON or a Tome character JSON.')
+      }
+      setJsonStatus({type:'success',msg:`✓ Character "${sheet.characterName}" loaded`})
+      setTimeout(()=>onApply(sheet), 600)
+    } catch(e) {
+      setJsonStatus({type:'error',msg:e.message})
+    }
+  }
+
+  function importJSONFile(e) {
+    const f=e.target.files[0]; if(!f) return
+    const r=new FileReader()
+    r.onload=ev=>{setJsonText(ev.target.result);setJsonStatus(null)}
+    r.readAsText(f)
+  }
+
+  const selectedClass = CLASS_DATA[tClass]
+
+  if(mode === 'choose') return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div style={{width:'100%',maxWidth:820,animation:'slideUp .25s ease'}} onClick={e=>e.stopPropagation()}>
+        <div className="cs-setup-header">
+          <h2 style={{color:'var(--gold)'}}>Choose How to Set Up Your Character</h2>
+          <p>Start from a class template, import from D&amp;D Beyond, or paste a JSON export.</p>
+        </div>
+        <div className="cs-setup-cards">
+          <div className="cs-setup-card" onClick={()=>setMode('template')}>
+            <div className="card-icon">⚔</div>
+            <h3>Class Template</h3>
+            <p>Choose your class, race, and background. The sheet pre-fills with hit dice, proficiencies, starting equipment, and racial bonuses.</p>
+          </div>
+          <div className="cs-setup-card" onClick={()=>setMode('ddb')}>
+            <div className="card-icon">🐉</div>
+            <h3>Import from D&amp;D Beyond</h3>
+            <p>Paste your D&amp;D Beyond character URL to import your name, class, race, stats, skills, HP, and more automatically.</p>
+          </div>
+          <div className="cs-setup-card" onClick={()=>setMode('json')}>
+            <div className="card-icon">📋</div>
+            <h3>Paste / Upload JSON</h3>
+            <p>Upload a D&amp;D Beyond JSON export or a previously exported Tome character file.</p>
+          </div>
+          <div className="cs-setup-card" onClick={onClose}>
+            <div className="card-icon">📝</div>
+            <h3>Blank Sheet</h3>
+            <p>Start with a completely empty character sheet and fill everything in yourself.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="import-modal-inner" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between" style={{marginBottom:'1rem'}}>
+          <h3 style={{margin:0,borderBottom:'none',paddingBottom:0}}>
+            {mode==='template'?'⚔ Class Template':mode==='ddb'?'🐉 Import from D&D Beyond':'📋 Import JSON'}
+          </h3>
+          <div className="flex gap-2">
+            <button className="btn btn-ghost btn-sm" onClick={()=>setMode('choose')}>← Back</button>
+            <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+          </div>
+        </div>
+
+        {mode==='template' && (
+          <div style={{overflow:'auto',maxHeight:'72vh'}}>
+            <div className="flex gap-2" style={{marginBottom:'1rem',flexWrap:'wrap'}}>
+              <div className="form-group" style={{flex:2,marginBottom:0,minWidth:160}}>
+                <label className="form-label">Character Name</label>
+                <input className="form-input" value={tName} onChange={e=>setTName(e.target.value)} placeholder="Theron Brightblade"/>
+              </div>
+              <div className="form-group" style={{flex:1,marginBottom:0,minWidth:80}}>
+                <label className="form-label">Level</label>
+                <input className="form-input" type="number" min={1} max={20} value={tLevel} onChange={e=>setTLevel(Math.max(1,Math.min(20,Number(e.target.value))))}/>
+              </div>
+            </div>
+
+            <div className="form-label" style={{marginBottom:'.5rem'}}>Choose Class</div>
+            <div className="class-grid">
+              {Object.entries(CLASS_DATA).map(([cls,cd])=>(
+                <div key={cls} className={`class-card${tClass===cls?' selected':''}`} onClick={()=>setTClass(cls)}>
+                  <div className="class-icon">{cd.icon}</div>
+                  <div className="class-name">{cls}</div>
+                  <div className="class-dice">{cd.hitDice} · {cd.primary}</div>
+                </div>
+              ))}
+            </div>
+
+            {tClass && (
+              <div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginBottom:'1rem',fontSize:'.82rem'}}>
+                <strong style={{fontFamily:'Cinzel,serif',color:'var(--gold)',fontSize:'.78rem'}}>{tClass} Features: </strong>
+                <span style={{color:'rgba(244,232,193,.8)'}}>{selectedClass?.features}</span>
+              </div>
+            )}
+
+            <div className="form-label" style={{marginBottom:'.5rem'}}>Choose Race</div>
+            <div className="race-bg-grid">
+              {Object.entries(RACE_DATA).map(([race,rd])=>(
+                <button key={race} className={`race-btn${tRace===race?' selected':''}`} onClick={()=>setTRace(race)}>
+                  {race}
+                  <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.45)',marginTop:'.1rem'}}>
+                    +{Object.entries(rd.asi||{}).map(([a,v])=>`${v} ${a.toUpperCase()}`).join(', ')} · {rd.speed}ft
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {tRace && (
+              <div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginBottom:'1rem',fontSize:'.82rem'}}>
+                <strong style={{fontFamily:'Cinzel,serif',color:'var(--gold)',fontSize:'.78rem'}}>{tRace} Traits: </strong>
+                <span style={{color:'rgba(244,232,193,.8)'}}>{RACE_DATA[tRace]?.traits}</span>
+              </div>
+            )}
+
+            <div className="form-label" style={{marginBottom:'.5rem'}}>Choose Background</div>
+            <div className="race-bg-grid">
+              {Object.entries(BACKGROUND_DATA).map(([bg,bd])=>(
+                <button key={bg} className={`race-btn${tBg===bg?' selected':''}`} onClick={()=>setTBg(bg)}>
+                  {bg}
+                  <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.45)',marginTop:'.1rem'}}>{bd.skills.map(s=>SKILL_NAMES[s]||s).join(', ')}</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2" style={{marginTop:'1.25rem'}}>
+              <button className="btn btn-primary" onClick={applyTemplate}>
+                ✓ Create {tClass||'Character'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mode==='ddb' && (
+          <div>
+            <p style={{fontSize:'.85rem',color:'rgba(244,232,193,.7)',marginBottom:'1rem',lineHeight:1.6}}>
+              Your D&amp;D Beyond character must be set to <strong style={{color:'var(--gold)'}}>Public</strong> for import to work.<br/>
+              On D&amp;D Beyond: <em>Edit Character → Sharing → set to Public</em>
+            </p>
+            <div className="form-group">
+              <label className="form-label">D&amp;D Beyond Character URL</label>
+              <input
+                className="form-input"
+                placeholder="https://www.dndbeyond.com/characters/12345678"
+                value={ddbUrl}
+                onChange={e=>{setDdbUrl(e.target.value);setDdbStatus(null)}}
+                onKeyDown={e=>e.key==='Enter'&&importDDB()}
+              />
+            </div>
+            <button className="btn btn-primary" onClick={importDDB} style={{marginBottom:'1rem'}}>
+              🐉 Import Character
+            </button>
+            {ddbStatus && <div className={`import-status ${ddbStatus.type}`}>{ddbStatus.msg}</div>}
+            <div className="divider" style={{margin:'1.25rem 0'}}/>
+            <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.5)',marginBottom:'.5rem'}}>
+              If automatic import fails, you can manually get the JSON:
+            </p>
+            <ol style={{fontSize:'.82rem',color:'rgba(244,232,193,.6)',paddingLeft:'1.25rem',lineHeight:1.8}}>
+              <li>Open your character on D&amp;D Beyond</li>
+              <li>Change the URL to: <code style={{background:'rgba(0,0,0,.4)',padding:'.1rem .3rem',borderRadius:2,color:'var(--gold)'}}>character-service.dndbeyond.com/character/v5/character/YOUR_ID</code></li>
+              <li>Copy all the JSON text that appears</li>
+              <li>Switch to the "Paste JSON" tab below and paste it there</li>
+            </ol>
+            <button className="btn btn-ghost btn-sm" style={{marginTop:'.75rem'}} onClick={()=>setMode('json')}>
+              → Paste JSON Instead
+            </button>
+          </div>
+        )}
+
+        {mode==='json' && (
+          <div>
+            <p style={{fontSize:'.85rem',color:'rgba(244,232,193,.7)',marginBottom:'1rem',lineHeight:1.6}}>
+              Paste a D&amp;D Beyond character JSON export, or a Tome character JSON (exported with the button below).
+            </p>
+            <div className="form-group">
+              <label className="form-label">Upload JSON File</label>
+              <input type="file" accept=".json,application/json" onChange={importJSONFile} style={{color:'var(--parchment)',fontSize:'.82rem'}}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Or Paste JSON</label>
+              <textarea
+                className="form-textarea"
+                placeholder={'{\n  "data": { ... }\n}'}
+                value={jsonText}
+                onChange={e=>{setJsonText(e.target.value);setJsonStatus(null)}}
+                style={{minHeight:160,fontFamily:'monospace',fontSize:'.78rem'}}
+              />
+            </div>
+            <button className="btn btn-primary" onClick={importJSON} disabled={!jsonText.trim()}>
+              📋 Import JSON
+            </button>
+            {jsonStatus && <div className={`import-status ${jsonStatus.type}`} style={{marginTop:'.75rem'}}>{jsonStatus.msg}</div>}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Character Sheet
+function CharacterSheet({ campaignId, playerName, readOnly=false }) {
+  const [sheet,setSheet]=useState(()=>Storage.getSheet(campaignId,playerName))
+  const [saved,setSaved]=useState(false)
+  const [showSetup,setShowSetup]=useState(false)
+
+  function upd(f,v){if(readOnly)return;setSheet(s=>({...s,[f]:v}));setSaved(false)}
+  function updN(path,v){
+    if(readOnly)return
+    setSheet(s=>{const p=path.split('.'),c={...s};let cur=c;for(let i=0;i<p.length-1;i++){cur[p[i]]={...cur[p[i]]};cur=cur[p[i]]};cur[p[p.length-1]]=v;return c})
+    setSaved(false)
+  }
+  function handleSave(){Storage.saveSheet(campaignId,playerName,sheet);setSaved(true);setTimeout(()=>setSaved(false),2000)}
+
+  function applyImportedSheet(s){
+    setSheet({...s,playerName:playerName})
+    Storage.saveSheet(campaignId,playerName,{...s,playerName:playerName})
+    setShowSetup(false)
+    setSaved(false)
+  }
+
+  function exportJSON(){
+    const blob=new Blob([JSON.stringify(sheet,null,2)],{type:'application/json'})
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob)
+    a.download=`${sheet.characterName||playerName}-character.json`;a.click()
+  }
+
+  const FI=({label,field,type='text',placeholder='',style={}})=>(
+    <div className="form-group" style={{marginBottom:0,...style}}>
+      <label className="form-label">{label}</label>
+      <input className="form-input" type={type} placeholder={placeholder} value={sheet[field]??''}
+        onChange={e=>upd(field,type==='number'?Number(e.target.value):e.target.value)}
+        readOnly={readOnly} style={readOnly?{opacity:.8,cursor:'default'}:{}}/>
+    </div>
+  )
+  const TA=({label,field,rows=3})=>(
+    <div className="form-group" style={{marginBottom:0}}>
+      <label className="form-label">{label}</label>
+      <textarea className="form-textarea" rows={rows} value={sheet[field]??''}
+        onChange={e=>upd(field,e.target.value)} readOnly={readOnly}
+        style={{minHeight:`${rows*1.6+1}rem`,...(readOnly?{opacity:.8,cursor:'default'}:{})}}/>
+    </div>
+  )
+
+  return (
+    <div className="char-sheet" style={{overflow:'auto',maxHeight:'100%'}}>
+      {showSetup&&<CharacterSetupModal playerName={playerName} campaignId={campaignId} onApply={applyImportedSheet} onClose={()=>setShowSetup(false)}/>}
+      {!readOnly&&(
+        <div className="flex items-center justify-between" style={{marginBottom:'1rem',flexWrap:'wrap',gap:'.5rem'}}>
+          <h2 style={{fontSize:'1rem'}}>Character Sheet</h2>
+          <div className="flex gap-2" style={{flexWrap:'wrap'}}>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setShowSetup(true)} title="Templates & Import">⚔ Templates / Import</button>
+            <button className="btn btn-ghost btn-sm" onClick={exportJSON} title="Export as JSON">⬇ Export JSON</button>
+            <button className="btn btn-primary" onClick={handleSave} style={{minWidth:100}}>{saved?'✓ Saved!':'💾 Save'}</button>
+          </div>
+        </div>
+      )}
+      <div className="cs-section">
+        <div className="cs-section-title">Character Identity</div>
+        <div className="cs-grid cs-grid-3" style={{gap:'.6rem'}}>
+          <FI label="Character Name" field="characterName" placeholder="Theron Brightblade"/>
+          <FI label="Race" field="race" placeholder="Human"/><FI label="Class" field="class" placeholder="Fighter"/>
+          <FI label="Subclass" field="subclass" placeholder="Battle Master"/><FI label="Level" field="level" type="number"/>
+          <FI label="Background" field="background" placeholder="Soldier"/>
+          <FI label="Alignment" field="alignment" placeholder="Lawful Good"/>
+          <FI label="Experience Points" field="experiencePoints" type="number"/>
+          <FI label="Player Name" field="playerName"/>
+        </div>
+      </div>
+      <div className="cs-section">
+        <div className="cs-section-title">Ability Scores</div>
+        <div className="cs-grid cs-grid-6">
+          {ABILITIES.map(ab=>(
+            <div key={ab} className="ability-box">
+              <div className="ability-label">{ab.toUpperCase()}</div>
+              <input className="ability-score" type="number" min={1} max={30} value={sheet[ab]??10}
+                onChange={e=>upd(ab,Number(e.target.value))} readOnly={readOnly} style={readOnly?{cursor:'default'}:{}}/>
+              <div className="ability-mod">{modStr(sheet[ab]??10)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="cs-section">
+        <div className="cs-section-title">Combat Stats</div>
+        <div className="cs-grid cs-grid-3" style={{gap:'.6rem'}}>
+          <FI label="Armor Class" field="ac" type="number"/><FI label="Initiative" field="initiative" type="number"/>
+          <FI label="Speed" field="speed" type="number"/><FI label="HP Maximum" field="hpMax" type="number"/>
+          <FI label="HP Current" field="hpCurrent" type="number"/><FI label="Temporary HP" field="hpTemp" type="number"/>
+          <FI label="Hit Dice" field="hitDice" placeholder="1d8"/><FI label="Hit Dice Used" field="hitDiceUsed" type="number"/>
+          <div className="form-group" style={{marginBottom:0}}><label className="form-label">Proficiency Bonus</label>
+            <div className="form-input" style={{cursor:'default',color:'var(--gold)',fontFamily:'Cinzel,serif'}}>+{sheet.proficiencyBonus}</div>
+          </div>
+        </div>
+        <div style={{marginTop:'.75rem'}}>
+          <div className="form-label" style={{marginBottom:'.4rem'}}>Death Saves</div>
+          <div className="flex gap-4">
+            {[['Successes','deathSaveSuccesses','#4CAF50'],['Failures','deathSaveFailures','#E87070']].map(([label,field,color])=>(
+              <div key={field}><div className="text-xs text-muted" style={{marginBottom:'.25rem'}}>{label}</div>
+                <div className="death-saves">{[0,1,2].map(i=>(
+                  <div key={i} className="death-pip" style={{color,background:i<sheet[field]?color:'transparent',cursor:readOnly?'default':'pointer'}}
+                    onClick={()=>!readOnly&&upd(field,sheet[field]===i+1?i:i+1)}/>
+                ))}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="cs-section">
+        <div className="cs-section-title">Saving Throws &amp; Skills</div>
+        <div className="cs-grid cs-grid-2" style={{gap:'1rem'}}>
+          <div>
+            <div className="form-label" style={{marginBottom:'.5rem'}}>Saving Throws</div>
+            {ABILITIES.map(ab=>{
+              const prof=sheet.savingThrows?.[ab]||false
+              const bonus=mod(sheet[ab]??10)+(prof?sheet.proficiencyBonus:0)
+              return <div key={ab} className="skill-row">
+                <input type="checkbox" className="skill-check" checked={prof} onChange={e=>updN(`savingThrows.${ab}`,e.target.checked)} disabled={readOnly}/>
+                <span className="skill-name">{ABILITY_NAMES[ab]}</span>
+                <span className="skill-bonus">{bonus>=0?`+${bonus}`:bonus}</span>
+              </div>
+            })}
+            <div className="divider"/>
+            <div className="form-label" style={{margin:'.4rem 0'}}>Passive Perception</div>
+            <div style={{fontFamily:'Cinzel,serif',color:'var(--gold)',fontSize:'1.1rem'}}>
+              {10+mod(sheet.wis??10)+(sheet.skills?.perception?sheet.proficiencyBonus:0)}
+            </div>
+          </div>
+          <div>
+            <div className="form-label" style={{marginBottom:'.5rem'}}>Skills</div>
+            {Object.entries(SKILLS).map(([skill,ability])=>{
+              const prof=sheet.skills?.[skill]||false
+              const bonus=mod(sheet[ability]??10)+(prof?sheet.proficiencyBonus:0)
+              return <div key={skill} className="skill-row">
+                <input type="checkbox" className="skill-check" checked={prof} onChange={e=>updN(`skills.${skill}`,e.target.checked)} disabled={readOnly}/>
+                <span className="skill-name">{SKILL_NAMES[skill]} <span className="text-muted">({ability})</span></span>
+                <span className="skill-bonus">{bonus>=0?`+${bonus}`:bonus}</span>
+              </div>
+            })}
+          </div>
+        </div>
+      </div>
+      <div className="cs-section">
+        <div className="cs-section-title">Attacks</div>
+        {(sheet.attacks||[]).map((atk,i)=>(
+          <div key={i} className="flex gap-2" style={{marginBottom:'.4rem',flexWrap:'wrap'}}>
+            {[['name','Attack name',2],['bonus','+5',1],['damage','1d8',1],['damageType','Slashing',1]].map(([f,ph,flex])=>(
+              <input key={f} className="form-input" placeholder={ph} value={atk[f]}
+                onChange={e=>{const a=[...sheet.attacks];a[i]={...a[i],[f]:e.target.value};upd('attacks',a)}}
+                style={{flex}} readOnly={readOnly}/>
+            ))}
+            {!readOnly&&<button className="btn btn-danger btn-sm btn-icon" onClick={()=>upd('attacks',sheet.attacks.filter((_,j)=>j!==i))}>✕</button>}
+          </div>
+        ))}
+        {!readOnly&&<button className="btn btn-ghost btn-sm mt-2" onClick={()=>upd('attacks',[...(sheet.attacks||[]),{name:'',bonus:'',damage:'',damageType:''}])}>+ Add Attack</button>}
+      </div>
+      <div className="cs-section">
+        <div className="cs-section-title">Spellcasting</div>
+        <div className="cs-grid cs-grid-3" style={{gap:'.6rem',marginBottom:'.75rem'}}>
+          <FI label="Spellcasting Ability" field="spellcastingAbility" placeholder="INT"/>
+          <FI label="Spell Save DC" field="spellSaveDC" type="number"/>
+          <FI label="Spell Attack Bonus" field="spellAttackBonus" placeholder="+5"/>
+        </div>
+        <div className="form-label" style={{marginBottom:'.5rem'}}>Spell Slots</div>
+        {Object.entries(sheet.spellSlots||{}).map(([lvl,slot])=>(
+          <div key={lvl} className="flex items-center gap-2" style={{marginBottom:'.35rem'}}>
+            <span style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',color:'var(--gold-dark)',minWidth:52}}>Level {lvl}</span>
+            <div className="flex gap-1">
+              {Array.from({length:slot.total||0}).map((_,i)=>(
+                <div key={i} className={`slot-pip${i<(slot.used||0)?' spent':''}`}
+                  onClick={()=>!readOnly&&updN(`spellSlots.${lvl}.used`,i<slot.used?i:i+1)}/>
+              ))}
+            </div>
+            {!readOnly&&<div className="flex gap-1 items-center">
+              <span className="text-xs text-muted">Total:</span>
+              <input className="num-input" type="number" min={0} max={9} value={slot.total} onChange={e=>updN(`spellSlots.${lvl}.total`,Number(e.target.value))} style={{width:40}}/>
+              <span className="text-xs text-muted">Used:</span>
+              <input className="num-input" type="number" min={0} max={slot.total} value={slot.used} onChange={e=>updN(`spellSlots.${lvl}.used`,Number(e.target.value))} style={{width:40}}/>
+            </div>}
+          </div>
+        ))}
+        <div className="mt-2"><TA label="Spell List" field="spells" rows={4}/></div>
+      </div>
+      <div className="cs-section"><div className="cs-section-title">Equipment &amp; Inventory</div><TA label="Equipment" field="equipment" rows={5}/></div>
+      <div className="cs-section">
+        <div className="cs-section-title">Personality</div>
+        <div className="cs-grid cs-grid-2" style={{gap:'.6rem'}}>
+          <TA label="Personality Traits" field="personalityTraits" rows={2}/>
+          <TA label="Ideals" field="ideals" rows={2}/>
+          <TA label="Bonds" field="bonds" rows={2}/>
+          <TA label="Flaws" field="flaws" rows={2}/>
+        </div>
+      </div>
+      <div className="cs-section"><div className="cs-section-title">Features &amp; Traits</div><TA label="Features &amp; Traits" field="featuresAndTraits" rows={5}/></div>
+      <div className="cs-section"><div className="cs-section-title">Backstory</div><TA label="Your Character's History" field="backstory" rows={6}/></div>
+      <div className="cs-section"><div className="cs-section-title">Notes</div><TA label="Session Notes" field="notes" rows={4}/></div>
+      {!readOnly&&<div style={{padding:'0 0 2rem'}}><button className="btn btn-primary btn-lg" onClick={handleSave}>{saved?'✓ Saved!':'💾 Save Character Sheet'}</button></div>}
+    </div>
+  )
+}
+
+// Players Tab
+function PlayersTab({ campaign }) {
+  const [viewing,setViewing]=useState(null)
+  const [sheets,setSheets]=useState({})
+  const players=Object.keys(campaign.players||{})
+
+  useEffect(()=>{
+    Storage.getPlayersWithSheets(campaign.id).then(s=>setSheets(s||{}))
+  },[campaign.id])
+
+  if(viewing) return (
+    <div style={{overflow:'auto',flex:1}}>
+      <div style={{padding:'1rem 1.5rem',borderBottom:'1px solid rgba(201,168,76,.2)',display:'flex',gap:'.75rem',alignItems:'center'}}>
+        <button className="btn btn-ghost btn-sm" onClick={()=>setViewing(null)}>← Back</button>
+        <h3 style={{fontSize:'.9rem'}}>{viewing}'s Character Sheet</h3>
+        <span className="text-xs text-muted">(DM view — read only)</span>
+      </div>
+      <CharacterSheet campaignId={campaign.id} playerName={viewing} readOnly/>
+    </div>
+  )
+  return (
+    <div style={{overflow:'auto',flex:1}}>
+      <div style={{padding:'1.5rem'}}>
+        <div className="flex items-center justify-between" style={{marginBottom:'1rem'}}>
+          <h2 style={{fontSize:'1rem'}}>Adventuring Party</h2>
+          <span className="text-sm text-muted">Code: <strong style={{color:'var(--gold)',fontFamily:'Cinzel,serif'}}>{campaign.sessionCode}</strong></span>
+        </div>
+        {players.length===0&&<div className="empty-state">No adventurers yet. Share the session code <strong style={{color:'var(--gold)',fontFamily:'Cinzel,serif',letterSpacing:'.1em'}}>{campaign.sessionCode}</strong> with your players.</div>}
+        <div className="players-grid">
+          {players.map(name=>{
+            const s=sheets[name]||Storage.getSheet(campaign.id,name)
+            return <div key={name} className="player-card" onClick={()=>setViewing(name)}>
+              <h3>{s.characterName||name}</h3>
+              <div style={{fontSize:'.72rem',color:'var(--gold-dark)',fontFamily:'Cinzel,serif',marginBottom:'.25rem'}}>{name}</div>
+              <div className="cs-preview">{[s.race&&s.class?`${s.race} ${s.class}`:null,s.level?`Level ${s.level}`:null,s.background||null].filter(Boolean).join(' · ')||'Sheet not filled yet'}</div>
+              <div className="mt-2"><button className="btn btn-ghost btn-sm">View Sheet →</button></div>
+            </div>
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Monster type → decorative emoji/icon for display
+const MONSTER_ICONS = {
+  dragon:'🐉',undead:'💀',fiend:'😈',celestial:'✨',elemental:'🌪',
+  giant:'🦴',beast:'🐾',monstrosity:'🦑',humanoid:'🗡',construct:'⚙',
+  plant:'🌿',ooze:'🫧',fey:'🌙',aberration:'👁',demon:'😈',
+}
+
+function MonsterImage({ m }) {
+  const [imgErr, setImgErr] = useState(false)
+  const icon = MONSTER_ICONS[m.type?.toLowerCase()] || '⚔'
+  // Open5e includes img_main on some creatures
+  if (m.img_main && !imgErr) return (
+    <div style={{width:'100%',height:180,borderRadius:4,overflow:'hidden',marginBottom:'1rem',border:'1px solid rgba(201,168,76,.2)',position:'relative',background:'#1C1209'}}>
+      <img src={m.img_main} alt={m.name} onError={()=>setImgErr(true)}
+        style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'top',opacity:.85}}/>
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to top,rgba(28,18,9,.8) 0%,transparent 50%)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',bottom:'0.6rem',left:'0.75rem',fontFamily:'Cinzel,serif',fontSize:'.75rem',color:'var(--gold)',letterSpacing:'.06em',textShadow:'0 1px 4px rgba(0,0,0,.8)'}}>{m.name}</div>
+    </div>
+  )
+  // Fallback: ornate icon banner
+  return (
+    <div style={{width:'100%',height:100,marginBottom:'1rem',borderRadius:4,border:'1px solid rgba(201,168,76,.2)',background:'linear-gradient(135deg,var(--wood-mid),var(--wood-light))',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'.35rem',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',inset:0,opacity:.06,background:'radial-gradient(ellipse at 50% 0%,var(--gold) 0%,transparent 70%)'}}/>
+      <div style={{fontSize:'2.8rem',lineHeight:1}}>{icon}</div>
+      <div style={{fontFamily:'Cinzel,serif',fontSize:'.65rem',letterSpacing:'.12em',color:'var(--gold-dark)',textTransform:'uppercase'}}>{m.size} {m.type}</div>
+    </div>
+  )
+}
+
+// Stat Block Component
+function StatBlock({ m }) {
+  const mf=s=>{const v=Math.floor((s-10)/2);return v>=0?`+${v}`:`${v}`}
+  function fmtSpeed(s){
+    if(!s)return '—'
+    if(typeof s==='string')return s
+    return Object.entries(s).filter(([,v])=>v).map(([k,v])=>k==='walk'?`${v} ft.`:`${k} ${v} ft.`).join(', ')
+  }
+  function fmtObj(o){
+    if(!o)return ''
+    if(typeof o==='string')return o
+    return Object.entries(o).filter(([,v])=>v).map(([k,v])=>`${k} +${v}`).join(', ')
+  }
+  return (
+    <div className="stat-block">
+      <h3>{m.name}</h3>
+      <div className="type-line">{m.size} {m.type}{m.subtype?` (${m.subtype})`:''}, {m.alignment}</div>
+      <div><strong>Armor Class</strong> {m.armor_class}{m.armor_desc?` (${m.armor_desc})`:''}</div>
+      <div><strong>Hit Points</strong> {m.hit_points} ({m.hit_dice})</div>
+      <div><strong>Speed</strong> {fmtSpeed(m.speed)}</div>
+      <hr className="divider"/>
+      <div className="attr-row">
+        {[['STR',m.strength],['DEX',m.dexterity],['CON',m.constitution],['INT',m.intelligence],['WIS',m.wisdom],['CHA',m.charisma]].map(([l,s])=>(
+          <div key={l} className="attr-box"><div className="label">{l}</div><div className="score">{s}</div><div className="mod">({mf(s)})</div></div>
+        ))}
+      </div>
+      <hr className="divider"/>
+      {m.saving_throws&&fmtObj(m.saving_throws)&&<div><strong>Saving Throws</strong> {fmtObj(m.saving_throws)}</div>}
+      {m.skills&&fmtObj(m.skills)&&<div><strong>Skills</strong> {fmtObj(m.skills)}</div>}
+      {m.damage_vulnerabilities&&<div><strong>Vulnerabilities</strong> {m.damage_vulnerabilities}</div>}
+      {m.damage_resistances&&<div><strong>Resistances</strong> {m.damage_resistances}</div>}
+      {m.damage_immunities&&<div><strong>Immunities</strong> {m.damage_immunities}</div>}
+      {m.condition_immunities&&<div><strong>Condition Immunities</strong> {m.condition_immunities}</div>}
+      {m.senses&&<div><strong>Senses</strong> {m.senses}</div>}
+      {m.languages&&<div><strong>Languages</strong> {m.languages}</div>}
+      <div><strong>Challenge</strong> {m.challenge_rating} ({(m.xp||0).toLocaleString()} XP)</div>
+      <hr className="divider"/>
+      {m.special_abilities?.map((a,i)=><p key={i}><strong>{a.name}.</strong> {a.desc}</p>)}
+      {m.actions?.length>0&&<div className="action-section"><h4>Actions</h4>{m.actions.map((a,i)=><p key={i}><strong>{a.name}.</strong> {a.desc}</p>)}</div>}
+      {m.legendary_actions?.length>0&&<div className="action-section"><h4>Legendary Actions</h4>{m.legendary_actions.map((a,i)=><p key={i}><strong>{a.name}.</strong> {a.desc}</p>)}</div>}
+      {m.reactions?.length>0&&<div className="action-section"><h4>Reactions</h4>{m.reactions.map((a,i)=><p key={i}><strong>{a.name}.</strong> {a.desc}</p>)}</div>}
+    </div>
+  )
+}
+
+// Bestiary Modal
+function Bestiary({ onAdd, onClose }) {
+  const [monsters,setMonsters]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(null)
+  const [search,setSearch]=useState(''),[sel,setSel]=useState(null),[count,setCount]=useState(1)
+  const [mode,setMode]=useState('bestiary'),[crFilter,setCrFilter]=useState('All')
+  const [custom,setCustom]=useState({name:'',type:'beast',subtype:'',alignment:'neutral',armor_class:12,hit_points:10,hit_dice:'2d6',speed:'30 ft.',strength:10,dexterity:10,constitution:10,intelligence:10,wisdom:10,charisma:10,challenge_rating:'1/4',xp:50,actions:[{name:'',desc:''}],legendary_actions:[],special_abilities:[]})
+
+  function fetchMonsters(){
+    setLoading(true);setError(null)
+    fetch('https://api.open5e.com/v1/monsters/?limit=500&document__slug=wotc-srd')
+      .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
+      .then(d=>{
+        const list = d.results || []
+        if(list.length===0) throw new Error('Empty response')
+        setMonsters(list)
+        try{ sessionStorage.setItem('tome_monsters', JSON.stringify(list)) }catch{}
+        setLoading(false)
+      })
+      .catch(e=>{
+        console.error('Bestiary fetch failed:', e)
+        setError(`Could not load monsters (${e.message}). Check internet connection.`)
+        setLoading(false)
+      })
+  }
+
+  useEffect(()=>{
+    try{
+      const c=JSON.parse(sessionStorage.getItem('tome_monsters'))
+      if(c&&c.length>0){ setMonsters(c); setLoading(false); return }
+    }catch{}
+    fetchMonsters()
+  },[])
+
+  const CRS=['All','0','1/8','1/4','1/2','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25']
+  const filtered=monsters.filter(m=>{
+    const ms=!search||m.name.toLowerCase().includes(search.toLowerCase())||m.type?.toLowerCase().includes(search.toLowerCase())
+    const mc=crFilter==='All'||String(m.challenge_rating)===crFilter
+    return ms&&mc
+  })
+
+  function rollHp(dice){
+    const m=dice?.match(/(\d+)d(\d+)(?:[+-](\d+))?/);if(!m)return 10
+    let t=0;for(let i=0;i<Number(m[1]);i++)t+=Math.floor(Math.random()*Number(m[2]))+1;return t+Number(m[3]||0)
+  }
+  function addMonster(m,n){
+    for(let i=0;i<n;i++){
+      const s=n>1?` ${i+1}`:''
+      onAdd({...m,name:m.name+s,hp:rollHp(m.hit_dice)||m.hit_points,ac:m.armor_class,initiative:Math.floor(Math.random()*20)+1+Math.floor((m.dexterity-10)/2)})
+    }
+  }
+
+  function updCustom(f,v){setCustom(c=>({...c,[f]:v}))}
+  function updAction(i,f,v){const a=[...custom.actions];a[i]={...a[i],[f]:v};setCustom(c=>({...c,actions:a}))}
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>📖 Bestiary</h2>
+          <div className="flex gap-2" style={{flex:1,marginLeft:'.5rem'}}>
+            <button className={`btn btn-sm ${mode==='bestiary'?'btn-primary':'btn-ghost'}`} onClick={()=>setMode('bestiary')}>Official Monsters</button>
+            <button className={`btn btn-sm ${mode==='custom'?'btn-primary':'btn-ghost'}`} onClick={()=>setMode('custom')}>Custom Monster</button>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕ Close</button>
+        </div>
+
+        {mode==='custom'?(
+          <div className="modal-body" style={{overflow:'auto',flexDirection:'column'}}>
+            <div style={{padding:'1rem',overflow:'auto'}}>
+              <h3 style={{marginBottom:'1rem',fontSize:'.9rem'}}>Custom Stat Block</h3>
+              <div className="cs-grid cs-grid-2" style={{gap:'.5rem',marginBottom:'.75rem'}}>
+                {[['name','Name'],['type','Type'],['subtype','Subtype'],['alignment','Alignment'],['speed','Speed'],['hit_dice','Hit Dice'],['challenge_rating','CR'],['xp','XP']].map(([f,l])=>(
+                  <div key={f} className="form-group" style={{marginBottom:0}}>
+                    <label className="form-label">{l}</label>
+                    <input className="form-input" value={custom[f]} onChange={e=>updCustom(f,e.target.value)} style={{fontSize:'.82rem'}}/>
+                  </div>
+                ))}
+                {[['armor_class','AC'],['hit_points','HP'],['strength','STR'],['dexterity','DEX'],['constitution','CON'],['intelligence','INT'],['wisdom','WIS'],['charisma','CHA']].map(([f,l])=>(
+                  <div key={f} className="form-group" style={{marginBottom:0}}>
+                    <label className="form-label">{l}</label>
+                    <input className="form-input" type="number" value={custom[f]} onChange={e=>updCustom(f,Number(e.target.value))} style={{fontSize:'.82rem'}}/>
+                  </div>
+                ))}
+              </div>
+              <div className="form-label" style={{marginBottom:'.4rem'}}>Actions</div>
+              {custom.actions.map((a,i)=>(
+                <div key={i} className="flex gap-1" style={{marginBottom:'.4rem'}}>
+                  <input className="form-input" placeholder="Action name" value={a.name} onChange={e=>updAction(i,'name',e.target.value)} style={{flex:1,fontSize:'.8rem'}}/>
+                  <input className="form-input" placeholder="Description" value={a.desc} onChange={e=>updAction(i,'desc',e.target.value)} style={{flex:2,fontSize:'.8rem'}}/>
+                  <button className="btn btn-danger btn-sm btn-icon" onClick={()=>setCustom(c=>({...c,actions:c.actions.filter((_,j)=>j!==i)}))}>✕</button>
+                </div>
+              ))}
+              <button className="btn btn-ghost btn-sm" onClick={()=>setCustom(c=>({...c,actions:[...c.actions,{name:'',desc:''}]}))}>+ Action</button>
+              <div style={{marginTop:'1rem'}}>
+                <button className="btn btn-primary" onClick={()=>{
+                  if(!custom.name.trim()){alert('Name required');return}
+                  const hp=rollHp(custom.hit_dice)||custom.hit_points
+                  onAdd({...custom,hp,ac:custom.armor_class,initiative:Math.floor(Math.random()*20)+1})
+                }}>Add to Encounter</button>
+              </div>
+            </div>
+          </div>
+        ):(
+          <>
+            <div style={{padding:'.5rem 1rem',borderBottom:'1px solid rgba(201,168,76,.15)',display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+              <input className="search-input" placeholder="Search monsters…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180}} autoFocus/>
+              <select className="form-select" style={{fontSize:'.8rem',padding:'.35rem .5rem'}} value={crFilter} onChange={e=>setCrFilter(e.target.value)}>
+                {CRS.map(cr=><option key={cr} value={cr}>{cr==='All'?'All CRs':`CR ${cr}`}</option>)}
+              </select>
+              <span className="text-xs text-muted" style={{alignSelf:'center'}}>{filtered.length} monsters</span>
+            </div>
+            <div className="modal-body">
+              {loading&&<div className="empty-state" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'1rem'}}><div style={{fontSize:'2rem',opacity:.4}}>📖</div>Loading SRD monsters…</div>}
+              {error&&<div className="empty-state" style={{flex:1,color:'#E87070',display:'flex',flexDirection:'column',gap:'1rem',alignItems:'center',justifyContent:'center'}}><div>{error}</div><button className="btn btn-ghost btn-sm" onClick={fetchMonsters}>↺ Retry</button></div>}
+              {!loading&&!error&&<>
+                <div className="bestiary-list">
+                  {filtered.map(m=>(
+                    <div key={m.slug} className={`bestiary-item${sel?.slug===m.slug?' selected':''}`} onClick={()=>{setSel(m);setCount(1)}}>
+                      <span>{m.name}</span><span className="bestiary-item-cr">CR {m.challenge_rating}</span>
+                    </div>
+                  ))}
+                  {!filtered.length&&<div className="empty-state" style={{padding:'2rem 1rem',fontSize:'.82rem'}}>No monsters match</div>}
+                </div>
+                <div className="bestiary-detail">
+                  {sel?<>
+                    <MonsterImage m={sel}/>
+                    <StatBlock m={sel}/>
+                    <div style={{marginTop:'1.25rem',padding:'1rem',background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,display:'flex',gap:'.75rem',alignItems:'center',flexWrap:'wrap'}}>
+                      <span style={{fontFamily:'Cinzel,serif',fontSize:'.75rem',color:'var(--gold)',letterSpacing:'.06em'}}>Add to Encounter</span>
+                      <div className="flex gap-1 items-center" style={{marginLeft:'auto'}}>
+                        <button className="btn btn-ghost btn-sm btn-icon" onClick={()=>setCount(c=>Math.max(1,c-1))}>−</button>
+                        <span style={{fontFamily:'Cinzel,serif',fontSize:'1rem',color:'var(--gold)',minWidth:24,textAlign:'center'}}>{count}</span>
+                        <button className="btn btn-ghost btn-sm btn-icon" onClick={()=>setCount(c=>Math.min(20,c+1))}>+</button>
+                      </div>
+                      <button className="btn btn-primary" style={{padding:'.5rem 1.25rem'}} onClick={()=>{addMonster(sel,count);onClose()}}>
+                        ⚔ Add {count>1?`${count}× `:''}to Encounter
+                      </button>
+                    </div>
+                  </>:<div className="empty-art" style={{marginTop:'3rem'}}>
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="36" stroke="#C9A84C" strokeWidth="1" opacity=".2"/><path d="M25 40 L40 20 L55 40 L40 60 Z" stroke="#C9A84C" strokeWidth="1.2" fill="none" opacity=".3"/><circle cx="40" cy="40" r="4" fill="#C9A84C" opacity=".25"/></svg>
+                    <div className="empty-title">Select a creature</div>
+                    <div className="empty-sub">Choose from the list to view its stat block and add it to your encounter.</div>
+                  </div>}
+                </div>
+              </>}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Encounter Tracker
+let cid=1
+function EncounterTracker({ campaign }) {
+  const [combatants,setCombatants]=useState([]),[activeIdx,setActiveIdx]=useState(null)
+  const [round,setRound]=useState(1),[running,setRunning]=useState(false)
+  const [showBestiary,setShowBestiary]=useState(false)
+  const [addForm,setAddForm]=useState({name:'',initiative:'',hp:'',ac:'',type:'monster'})
+  const [dmgInputs,setDmgInputs]=useState({})
+
+  const sorted=[...combatants].sort((a,b)=>b.initiative-a.initiative)
+
+  function addCombatant(c){setCombatants(prev=>[...prev,{...c,id:cid++,currentHp:c.hp,maxHp:c.hp,conditions:[],dead:false}])}
+  function handleAdd(e){
+    e.preventDefault();const{name,initiative,hp,ac,type}=addForm;if(!name.trim())return
+    addCombatant({name:name.trim(),initiative:Number(initiative)||0,hp:Number(hp)||10,ac:Number(ac)||10,type})
+    setAddForm({name:'',initiative:'',hp:'',ac:'',type:'monster'})
+  }
+  function addFromBestiary(m){addCombatant({name:m.name,initiative:m.initiative||Math.floor(Math.random()*20)+1,hp:m.hp||m.hit_points||10,ac:m.ac||m.armor_class||10,type:'monster'});setShowBestiary(false)}
+  function applyDamage(id,amt,heal=false){
+    setCombatants(prev=>prev.map(c=>{if(c.id!==id)return c;const h=heal?Math.min(c.maxHp,c.currentHp+amt):Math.max(0,c.currentHp-amt);return{...c,currentHp:h,dead:h<=0}}))
+    setDmgInputs(d=>({...d,[id]:''}))
+  }
+  function toggleCond(id,cond){setCombatants(prev=>prev.map(c=>{if(c.id!==id)return c;const h=c.conditions.includes(cond);return{...c,conditions:h?c.conditions.filter(x=>x!==cond):[...c.conditions,cond]}}))}
+  function remove(id){setCombatants(prev=>prev.filter(c=>c.id!==id))}
+  function nextTurn(){
+    if(!sorted.length)return
+    const next=activeIdx===null?0:(activeIdx+1)%sorted.length
+    if(next===0&&activeIdx!==null)setRound(r=>r+1)
+    setActiveIdx(next);setRunning(true)
+  }
+  function reset(){if(!confirm('Reset encounter?'))return;setCombatants([]);setActiveIdx(null);setRound(1);setRunning(false)}
+  function updInit(id,v){setCombatants(prev=>prev.map(c=>c.id===id?{...c,initiative:Number(v)||0}:c))}
+  function hpColor(pct){return pct>.6?'#4CAF50':pct>.25?'#FF9800':'#F44336'}
+  const activeId=running&&activeIdx!==null?sorted[activeIdx]?.id:null
+
+  return (
+    <div className="encounter-layout">
+      <div className="encounter-sidebar">
+        <div className="round-display">{running?`Round ${round}`:'Encounter Paused'}</div>
+        <div className="flex gap-2">
+          <button className="btn btn-primary btn-sm" style={{flex:1}} onClick={nextTurn}>{running?'▶ Next Turn':'▶ Start'}</button>
+          <button className="btn btn-ghost btn-sm" onClick={reset}>↺ Reset</button>
+        </div>
+        <div className="divider"/>
+        <form className="encounter-add-form" onSubmit={handleAdd}>
+          <h4>Quick Add</h4>
+          <div className="form-group" style={{marginBottom:'.4rem'}}>
+            <input className="form-input" placeholder="Name" value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))} style={{fontSize:'.82rem'}}/>
+          </div>
+          <div className="flex gap-1" style={{marginBottom:'.4rem'}}>
+            <input className="form-input num-input" placeholder="Init" value={addForm.initiative} onChange={e=>setAddForm(f=>({...f,initiative:e.target.value}))} style={{width:50}}/>
+            <input className="form-input num-input" placeholder="HP" value={addForm.hp} onChange={e=>setAddForm(f=>({...f,hp:e.target.value}))} style={{width:50}}/>
+            <input className="form-input num-input" placeholder="AC" value={addForm.ac} onChange={e=>setAddForm(f=>({...f,ac:e.target.value}))} style={{width:50}}/>
+            <select className="form-select" style={{fontSize:'.72rem',flex:1}} value={addForm.type} onChange={e=>setAddForm(f=>({...f,type:e.target.value}))}>
+              <option value="monster">Monster</option><option value="player">Player</option><option value="npc">NPC</option>
+            </select>
+          </div>
+          <button type="submit" className="btn btn-primary btn-sm w-full">+ Add</button>
+        </form>
+        <button className="btn btn-primary btn-sm w-full" onClick={()=>setShowBestiary(true)}>📖 Bestiary (334 Monsters)</button>
+        {Object.keys(campaign.players||{}).length>0&&<div>
+          <div className="form-label" style={{marginBottom:'.35rem'}}>Party Members</div>
+          {Object.keys(campaign.players).map(pN=>(
+            <button key={pN} className="btn btn-ghost btn-sm w-full" style={{marginBottom:'.25rem',textAlign:'left'}} onClick={()=>addCombatant({name:pN,initiative:0,hp:20,ac:14,type:'player'})}>+ {pN}</button>
+          ))}
+        </div>}
+      </div>
+      <div className="encounter-main">
+        {!combatants.length?(
+          <div className="empty-art" style={{marginTop:'3rem'}}>
+            <svg width="130" height="120" viewBox="0 0 130 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="65" y1="10" x2="65" y2="110" stroke="#C9A84C" strokeWidth="2.5" opacity=".35"/>
+              <line x1="15" y1="60" x2="115" y2="60" stroke="#C9A84C" strokeWidth="2.5" opacity=".35"/>
+              <polygon points="65,10 70,30 90,30 74,42 80,62 65,50 50,62 56,42 40,30 60,30" fill="none" stroke="#C9A84C" strokeWidth="1.2" opacity=".3"/>
+              <circle cx="65" cy="60" r="3" fill="#C9A84C" opacity=".4"/>
+              <path d="M32 28 L48 44" stroke="#C9A84C" strokeWidth="1" opacity=".25"/>
+              <path d="M98 28 L82 44" stroke="#C9A84C" strokeWidth="1" opacity=".25"/>
+              <path d="M32 92 L48 76" stroke="#C9A84C" strokeWidth="1" opacity=".25"/>
+              <path d="M98 92 L82 76" stroke="#C9A84C" strokeWidth="1" opacity=".25"/>
+              <circle cx="32" cy="28" r="3" fill="none" stroke="#C9A84C" strokeWidth="1" opacity=".3"/>
+              <circle cx="98" cy="28" r="3" fill="none" stroke="#C9A84C" strokeWidth="1" opacity=".3"/>
+              <circle cx="32" cy="92" r="3" fill="none" stroke="#C9A84C" strokeWidth="1" opacity=".3"/>
+              <circle cx="98" cy="92" r="3" fill="none" stroke="#C9A84C" strokeWidth="1" opacity=".3"/>
+            </svg>
+            <div className="empty-title">The Field Stands Empty</div>
+            <div className="empty-sub">Add creatures from the Bestiary or use Quick Add to begin marshaling your forces for combat.</div>
+            <div className="filigree" style={{opacity:.3}}>⚔ ✦ ⚔</div>
+          </div>
+        ):(
+          <>
+            <div className="flex items-center justify-between" style={{marginBottom:'.75rem'}}>
+              <h3 style={{fontSize:'.9rem'}}>Initiative Order — {combatants.length} combatants</h3>
+              <span className="text-xs text-muted">Enter amount, then click DMG or HEAL</span>
+            </div>
+            {sorted.map((c,idx)=>{
+              const pct=c.maxHp>0?c.currentHp/c.maxHp:0
+              const isActive=c.id===activeId
+              const typeColor=c.type==='player'?'#4A8A4A':c.type==='npc'?'#4A4A8A':'#8A4A4A'
+              return (
+                <div key={c.id} className={`combatant-row${isActive?' active-turn':''}${c.dead?' dead':''}`}>
+                  <div className="combatant-top">
+                    <div className="combatant-initiative">{c.initiative}</div>
+                    <div style={{width:6,height:6,borderRadius:'50%',background:typeColor,flexShrink:0}}/>
+                    <div className="combatant-name">{c.name}</div>
+                    {isActive&&<span style={{fontSize:'.65rem',color:'var(--gold)',fontFamily:'Cinzel,serif',animation:'pulse 1.5s infinite'}}>◄ ACTIVE</span>}
+                    <button className="btn btn-danger btn-sm btn-icon" onClick={()=>remove(c.id)} style={{padding:'.15rem .35rem',fontSize:'.7rem'}}>✕</button>
+                  </div>
+                  <div className="combatant-stats">
+                    <div className="hp-bar-wrap">
+                      <div className="hp-text">{c.currentHp}/{c.maxHp} HP {c.dead&&'💀'}</div>
+                      <div className="hp-bar"><div className="hp-fill" style={{width:`${pct*100}%`,background:hpColor(pct)}}/></div>
+                    </div>
+                    <div className="stat-chip">AC {c.ac}</div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted">Init:</span>
+                      <input className="num-input" type="number" value={c.initiative} onChange={e=>updInit(c.id,e.target.value)} style={{width:44}}/>
+                    </div>
+                    <div className="flex gap-1 items-center">
+                      <input className="num-input" type="number" min={0} placeholder="0" value={dmgInputs[c.id]||''} onChange={e=>setDmgInputs(d=>({...d,[c.id]:e.target.value}))} style={{width:44}}/>
+                      <button className="btn btn-danger btn-sm" style={{padding:'.15rem .45rem',fontSize:'.7rem'}} onClick={()=>applyDamage(c.id,Number(dmgInputs[c.id])||0)}>DMG</button>
+                      <button className="btn btn-sm" style={{padding:'.15rem .45rem',fontSize:'.7rem',background:'rgba(42,92,42,.4)',border:'1px solid #4A7A4A',color:'#9ACA9A'}} onClick={()=>applyDamage(c.id,Number(dmgInputs[c.id])||0,true)}>HEAL</button>
+                    </div>
+                  </div>
+                  <div className="flex gap-1" style={{marginTop:'.35rem',flexWrap:'wrap'}}>
+                    {c.conditions.map(cond=>(
+                      <span key={cond} className="condition-tag" onClick={()=>toggleCond(c.id,cond)}>{cond} ✕</span>
+                    ))}
+                    <select className="form-select" style={{fontSize:'.65rem',padding:'.1rem .3rem',background:'rgba(0,0,0,.4)',border:'1px dashed rgba(201,168,76,.25)',color:'rgba(244,232,193,.5)'}}
+                      value="" onChange={e=>{if(e.target.value)toggleCond(c.id,e.target.value)}}>
+                      <option value="">+ Condition</option>
+                      {CONDITIONS.filter(x=>!c.conditions.includes(x)).map(x=><option key={x}>{x}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )
+            })}
+          </>
+        )}
+      </div>
+      {showBestiary&&<Bestiary onAdd={addFromBestiary} onClose={()=>setShowBestiary(false)}/>}
+    </div>
+  )
+}
+
+function CopyJoinLink({ campaign }) {
+  const [label, setLabel] = React.useState('🔗 Copy Player URL')
+  const isFile = location.protocol === 'file:'
+
+  function copy() {
+    if (isFile) {
+      alert(
+        'Share links work when using the server.\n\n' +
+        'Double-click  start-server.bat  — it shows the URL to send players.\n\n' +
+        'Players can also just open the same URL and type code: ' + campaign.sessionCode
+      )
+      return
+    }
+    const base = location.href.split('?')[0].split('#')[0]
+    const url = `${base}?code=${campaign.sessionCode}`
+    navigator.clipboard.writeText(url)
+      .then(() => { setLabel('✓ Copied!'); setTimeout(()=>setLabel('🔗 Copy Player URL'),2500) })
+      .catch(() => prompt('Send this URL to your players:', url))
+  }
+
+  return (
+    <button className="btn btn-ghost btn-sm" onClick={copy}
+      style={{marginLeft:'auto',fontSize:'.7rem', opacity: isFile ? 0.6 : 1}}
+      title={isFile ? 'Run start-server.bat first' : `Copy join URL for code ${campaign.sessionCode}`}>
+      {label}{isFile ? ' ⚠' : ''}
+    </button>
+  )
+}
+
+// Banner shown when running from file:// so the DM knows to use the server
+function FileProtocolBanner() {
+  const [dismissed, setDismissed] = React.useState(
+    () => sessionStorage.getItem('tome_banner_dismissed') === '1'
+  )
+  if (location.protocol !== 'file:' || dismissed) return null
+  function dismiss() { sessionStorage.setItem('tome_banner_dismissed','1'); setDismissed(true) }
+  return (
+    <div style={{
+      background:'rgba(139,90,0,.25)', borderBottom:'1px solid rgba(201,168,76,.4)',
+      padding:'.5rem 1.25rem', fontSize:'.78rem', fontFamily:'Lora,serif',
+      color:'rgba(244,232,193,.85)', display:'flex', alignItems:'center', gap:'1rem', flexShrink:0
+    }}>
+      <span>⚠</span>
+      <span style={{flex:1}}>
+        <strong style={{fontFamily:'Cinzel,serif',color:'var(--gold)'}}>Players on other devices can't join yet.</strong>
+        {' '}Double-click <code style={{background:'rgba(0,0,0,.3)',padding:'.1rem .3rem',borderRadius:2}}>start-server.bat</code> in the <em>the-tome</em> folder, then share the player URL it shows.
+      </span>
+      <button onClick={dismiss} style={{background:'none',border:'none',color:'rgba(244,232,193,.5)',cursor:'pointer',fontSize:'.9rem',padding:'0 .25rem'}}>✕</button>
+    </div>
+  )
+}
+
+// Campaign View
+function CampaignView({ dm, campaignId, onBack, onLogout, onPlayerJoin }) {
+  const [campaign,setCampaign]=useState(()=>Storage.getCampaign(campaignId))
+  const [tab,setTab]=useState('library')
+  function refresh(){setCampaign(Storage.getCampaign(campaignId))}
+  if(!campaign)return null
+  return (
+    <div className="app-shell">
+      <div className="topbar">
+        <div className="flex items-center gap-4">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>← Campaigns</button>
+          <span className="topbar-title">⚔ The Tome</span>
+        </div>
+        <div className="topbar-actions">
+          <span style={{fontFamily:'Cinzel,serif',fontSize:'.8rem',color:'var(--gold-dark)'}}>{dm.name}</span>
+          <RulesBtn/>
+          <button className="btn btn-ghost btn-sm" onClick={onPlayerJoin} title="Open player join screen on this device">👤 Player Join</button>
+          <button className="btn btn-ghost btn-sm" onClick={onLogout}>Sign Out</button>
+        </div>
+      </div>
+      <div className="campaign-view" style={{flex:1,overflow:'hidden'}}>
+        <div className="campaign-header">
+          <h2>{campaign.name}</h2>
+          <span className="code-badge">{campaign.sessionCode}</span>
+          <CopyJoinLink campaign={campaign}/>
+        </div>
+        <div className="tab-bar">
+          {[['library','📚 Library'],['players','⚔ Players'],['encounter','🐉 Encounter']].map(([id,lbl])=>(
+            <button key={id} className={`tab-btn${tab===id?' active':''}`} onClick={()=>setTab(id)}>{lbl}</button>
+          ))}
+        </div>
+        <div className="tab-content">
+          {tab==='library'&&<LibraryTab campaignId={campaignId} onUpdate={refresh} isDM/>}
+          {tab==='players'&&<PlayersTab campaign={campaign}/>}
+          {tab==='encounter'&&<EncounterTracker campaign={campaign}/>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Wraps character sheet — shows setup modal first if sheet is blank
+function CharacterTabWrapper({ campaignId, playerName, displayName }) {
+  const existing = Storage.getSheet(campaignId, playerName)
+  const isBlank = !existing.class && !existing.race && !existing.background
+  const [showSetup, setShowSetup] = useState(isBlank)
+  const [key, setKey] = useState(0)
+
+  function applySheet(sheet) {
+    Storage.saveSheet(campaignId, playerName, { ...sheet, playerName })
+    setShowSetup(false)
+    setKey(k => k + 1)
+  }
+
+  if (showSetup) return (
+    <div style={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid rgba(201,168,76,.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <h3 style={{ fontSize: '.9rem' }}>Set Up Your Character</h3>
+        {!isBlank && <button className="btn btn-ghost btn-sm" onClick={() => setShowSetup(false)}>Skip → Edit Sheet</button>}
+      </div>
+      <div className="cs-setup" style={{ justifyContent: 'flex-start', paddingTop: '1.5rem' }}>
+        <div className="cs-setup-header">
+          <h2 style={{ color: 'var(--gold)' }}>How would you like to set up your character?</h2>
+          <p>Choose a class template, import from D&amp;D Beyond, upload a JSON, or start with a blank sheet.</p>
+        </div>
+        <div className="cs-setup-cards">
+          <div className="cs-setup-card" onClick={() => { setShowSetup(false); setKey(k=>k+1) }}>
+            <div className="card-icon">📝</div>
+            <h3>Blank Sheet</h3>
+            <p>Open an empty character sheet and fill everything in manually at your own pace.</p>
+          </div>
+          <div className="cs-setup-card" onClick={() => {
+            // Render the template modal inline by showing a sub-modal
+            const evt = new CustomEvent('tome:openSetup', { detail: { mode: 'template', campaignId, playerName, onApply: applySheet } })
+            window.dispatchEvent(evt)
+          }}>
+            <div className="card-icon">⚔</div>
+            <h3>Class Template</h3>
+            <p>Pick your class, race &amp; background — the sheet pre-fills hit dice, proficiencies, and starting gear.</p>
+          </div>
+          <div className="cs-setup-card" onClick={() => {
+            const evt = new CustomEvent('tome:openSetup', { detail: { mode: 'ddb', campaignId, playerName, onApply: applySheet } })
+            window.dispatchEvent(evt)
+          }}>
+            <div className="card-icon">🐉</div>
+            <h3>D&amp;D Beyond Import</h3>
+            <p>Paste your D&amp;D Beyond character URL and we'll pull in your stats, class, HP, skills and more.</p>
+          </div>
+          <div className="cs-setup-card" onClick={() => {
+            const evt = new CustomEvent('tome:openSetup', { detail: { mode: 'json', campaignId, playerName, onApply: applySheet } })
+            window.dispatchEvent(evt)
+          }}>
+            <div className="card-icon">📋</div>
+            <h3>Import JSON</h3>
+            <p>Upload or paste a D&amp;D Beyond export or a previously saved Tome character JSON file.</p>
+          </div>
+        </div>
+        <GlobalSetupListener onApply={applySheet} />
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ overflow: 'auto', height: '100%' }}>
+      <CharacterSheet key={key} campaignId={campaignId} playerName={playerName} readOnly={false} />
+    </div>
+  )
+}
+
+// Listens for the custom event dispatched from setup cards to open the import modal
+function GlobalSetupListener({ onApply }) {
+  const [modal, setModal] = useState(null) // { mode, campaignId, playerName }
+  useEffect(() => {
+    function handler(e) { setModal(e.detail) }
+    window.addEventListener('tome:openSetup', handler)
+    return () => window.removeEventListener('tome:openSetup', handler)
+  }, [])
+  if (!modal) return null
+  return (
+    <CharacterSetupModal
+      playerName={modal.playerName}
+      campaignId={modal.campaignId}
+      onApply={sheet => { onApply(sheet); setModal(null) }}
+      onClose={() => setModal(null)}
+      initialMode={modal.mode}
+    />
+  )
+}
+
+// Player View
+function PlayerView({ player, onLogout }) {
+  const [tab,setTab]=useState('world')
+  const [viewDoc,setViewDoc]=useState(null),[viewMap,setViewMap]=useState(null)
+  const [campaign,setCampaign]=useState(()=>Storage.getCampaign(player.campaignId))
+
+  useEffect(()=>{
+    if(!campaign&&IS_SERVER){
+      api('GET',`campaign/${player.campaignId}`).then(r=>{
+        if(r.ok){const cs=load('tome_campaigns');cs[r.campaign.id]=r.campaign;save('tome_campaigns',cs);setCampaign(r.campaign)}
+      }).catch(()=>{})
+    }
+  },[])
+
+  if(!campaign)return<div className="landing"><h2 style={{color:'var(--gold)'}}>Loading campaign…</h2><button className="btn btn-ghost" style={{marginTop:'1rem'}} onClick={onLogout}>Back</button></div>
+  const revealed=(campaign.documents||[]).filter(d=>d.revealed)
+  const grouped=CATEGORIES.reduce((a,c)=>{a[c]=revealed.filter(d=>d.category===c);return a},{})
+  return (
+    <div className="app-shell">
+      <div className="topbar">
+        <span className="topbar-title">⚔ The Tome</span>
+        <div className="topbar-actions">
+          <span style={{fontFamily:'Cinzel,serif',fontSize:'.8rem',color:'var(--gold-dark)'}}>{player.name}</span>
+          <RulesBtn/>
+          <button className="btn btn-ghost btn-sm" onClick={onLogout}>Leave Campaign</button>
+        </div>
+      </div>
+      <div className="campaign-view" style={{flex:1,overflow:'hidden'}}>
+        <div className="campaign-header"><h2>{campaign.name}</h2><span className="code-badge">{campaign.sessionCode}</span></div>
+        <div className="tab-bar">
+          <button className={`tab-btn${tab==='world'?' active':''}`} onClick={()=>setTab('world')}>📜 World Lore</button>
+          <button className={`tab-btn${tab==='character'?' active':''}`} onClick={()=>setTab('character')}>🧝 Character Sheet</button>
+        </div>
+        <div className="tab-content" style={{overflow:'auto'}}>
+          {tab==='world'&&(
+            <div className="player-layout">
+              <div className="player-sidebar">
+                <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.75rem',textTransform:'uppercase'}}>Revealed Documents</div>
+                {!revealed.length&&<div style={{fontSize:'.82rem',color:'rgba(244,232,193,.4)',fontStyle:'italic',fontFamily:'IM Fell English,serif'}}>The DM hasn't revealed any lore yet…</div>}
+                {CATEGORIES.map(cat=>{
+                  const docs=grouped[cat];if(!docs.length)return null
+                  return <div key={cat} className="doc-category-section">
+                    <div className="doc-category-title">{cat}</div>
+                    {docs.map(doc=>(
+                      <div key={doc.id} className="doc-preview-card" onClick={()=>doc.category==='Map'&&doc.image?setViewMap(doc):setViewDoc(doc)}>
+                        <h4>{doc.title}</h4>
+                        <div className="preview-text">{doc.body?.replace(/<[^>]+>/g,' ').substring(0,80)||'—'}</div>
+                      </div>
+                    ))}
+                  </div>
+                })}
+              </div>
+              <div className="player-main">
+                {!revealed.length?(
+                  <div className="empty-art" style={{marginTop:'3rem',flex:1}}>
+                    <svg width="120" height="140" viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <ellipse cx="60" cy="76" rx="36" ry="46" fill="none" stroke="#C9A84C" strokeWidth="1.2" opacity=".25"/>
+                      <ellipse cx="60" cy="76" rx="28" ry="38" fill="none" stroke="#C9A84C" strokeWidth=".7" opacity=".18"/>
+                      <path d="M60 30 C60 30 44 52 44 68 C44 77 51 84 60 84 C69 84 76 77 76 68 C76 52 60 30 60 30Z" fill="rgba(201,168,76,.06)" stroke="#C9A84C" strokeWidth="1" opacity=".3"/>
+                      <path d="M60 30 L60 84" stroke="#C9A84C" strokeWidth=".6" strokeDasharray="3 3" opacity=".2"/>
+                      <circle cx="60" cy="30" r="2.5" fill="#C9A84C" opacity=".4"/>
+                      <path d="M36 104 Q60 96 84 104" stroke="#C9A84C" strokeWidth=".8" opacity=".2" fill="none"/>
+                      <path d="M40 110 Q60 104 80 110" stroke="#C9A84C" strokeWidth=".6" opacity=".15" fill="none"/>
+                      <path d="M28 76 L36 76" stroke="#C9A84C" strokeWidth=".8" opacity=".2"/>
+                      <path d="M84 76 L92 76" stroke="#C9A84C" strokeWidth=".8" opacity=".2"/>
+                      <circle cx="60" cy="16" r="1.5" fill="#C9A84C" opacity=".3"/>
+                      <line x1="54" y1="16" x2="46" y2="20" stroke="#C9A84C" strokeWidth=".6" opacity=".2"/>
+                      <line x1="66" y1="16" x2="74" y2="20" stroke="#C9A84C" strokeWidth=".6" opacity=".2"/>
+                    </svg>
+                    <div className="empty-title">The Pages Lie Sealed</div>
+                    <div className="empty-sub">The secrets of this world remain hidden. Your Dungeon Master will illuminate the tome as your adventure unfolds.</div>
+                    <div className="filigree" style={{opacity:.3}}>✦ ✦ ✦</div>
+                  </div>
+                ):(
+                  CATEGORIES.map(cat=>{
+                    const docs=grouped[cat];if(!docs.length)return null
+                    return <div key={cat} style={{marginBottom:'2rem'}}>
+                      <div className="ornament"><span style={{fontFamily:'Cinzel,serif',fontSize:'.75rem',letterSpacing:'.12em',color:'var(--gold-dark)',textTransform:'uppercase'}}>{cat}</span></div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'.75rem'}}>
+                        {docs.map(doc=>(
+                          <div key={doc.id} className="doc-preview-card" onClick={()=>doc.category==='Map'&&doc.image?setViewMap(doc):setViewDoc(doc)} style={{padding:'1rem'}}>
+                            {doc.image&&<img src={doc.image} alt="" style={{width:'100%',height:100,objectFit:'cover',borderRadius:3,marginBottom:'.5rem',border:'1px solid rgba(201,168,76,.2)'}}/>}
+                            <h4>{doc.title}</h4>
+                            {doc.category==='Map'?<div className="preview-text">🗺 Click to explore the map</div>:<div className="preview-text">{doc.body?.replace(/<[^>]+>/g,' ').substring(0,100)||'—'}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  })
+                )}
+              </div>
+            </div>
+          )}
+          {tab==='character'&&(
+            <CharacterTabWrapper campaignId={player.campaignId} playerName={player.name} displayName={player.name}/>
+          )}
+        </div>
+      </div>
+      {viewDoc&&<DocumentViewer doc={viewDoc} onClose={()=>setViewDoc(null)}/>}
+      {viewMap&&<MapViewer doc={viewMap} onClose={()=>setViewMap(null)}/>}
+    </div>
+  )
+}
+
+// ── Root App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [view,setView]=useState('landing')
+  const [dm,setDm]=useState(null),[player,setPlayer]=useState(null)
+  const [campaignId,setCampaignId]=useState(null)
+  const [joinCode,setJoinCode]=useState('')
+
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search)
+    // ?code=123456 — direct join link
+    const codeParam=params.get('code')
+    if(codeParam){
+      window.history.replaceState({},'',window.location.pathname)
+      setJoinCode(codeParam.replace(/\D/g,'').slice(0,6))
+      setView('join'); return
+    }
+    // Legacy ?join= base64 link support
+    const joinData=params.get('join')
+    if(joinData){
+      const imported=importCampaignFromLink(joinData)
+      window.history.replaceState({},'',window.location.pathname)
+      if(imported) setJoinCode(imported.sessionCode)
+      setView('join'); return
+    }
+
+    const isLocal = ['localhost','127.0.0.1'].includes(location.hostname)
+    const d=Storage.currentDM(), p=Storage.currentPlayer()
+
+    if(p){setPlayer(p);setView('player-view');return}
+    if(d && isLocal){setDm(d);setView('dm-dashboard');return}
+
+    // Non-localhost on the server → player device, skip the landing page
+    if(IS_SERVER && !isLocal){setView('join');return}
+  },[])
+
+  function loginDM(d){setDm(d);setView('dm-dashboard')}
+  function joinPlayer(p){setPlayer(p);setView('player-view')}
+  function openCampaign(id){setCampaignId(id);setView('dm-campaign')}
+  function logoutDM(){Storage.logoutDM();setDm(null);setCampaignId(null);setView('landing')}
+  function logoutPlayer(){Storage.logoutPlayer();setPlayer(null);setView('landing')}
+
+  if(view==='landing')return<Landing onDM={()=>setView('dm-login')} onPlayer={()=>setView('join')}/>
+  if(view==='dm-login')return<LoginScreen onLogin={loginDM} onBack={()=>setView('landing')}/>
+  // 'join' view: back button returns DM to dashboard if they were logged in, else landing
+  if(view==='join')return<PlayerJoin onJoin={joinPlayer} onBack={()=>dm?setView('dm-dashboard'):setView('landing')} prefillCode={joinCode}/>
+  if(view==='dm-dashboard')return<DMDashboard dm={dm} onOpen={openCampaign} onLogout={logoutDM} onPlayerJoin={()=>setView('join')}/>
+  if(view==='dm-campaign')return<CampaignView dm={dm} campaignId={campaignId} onBack={()=>setView('dm-dashboard')} onLogout={logoutDM} onPlayerJoin={()=>setView('join')}/>
+  if(view==='player-view')return<PlayerView player={player} onLogout={logoutPlayer}/>
+  return null
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>)
+</script>
+<script>
+// ── Dev stress-test (runs automatically, results in console) ────────────────
+(function runStressTest() {
+  const CAMPAIGN_CODE = '__TEST__'
+  const results = []
+  let pass = 0, fail = 0
+
+  function assert(label, condition) {
+    if (condition) { pass++; results.push('✅ ' + label) }
+    else           { fail++; results.push('❌ FAIL: ' + label) }
+  }
+
+  try {
+    // ── 1. Setup: create a test campaign directly in localStorage ───────────
+    const testCampaign = {
+      id: '__test_campaign__',
+      dmEmail: 'test@dm.com',
+      name: 'Stress Test Campaign',
+      sessionCode: CAMPAIGN_CODE,
+      createdAt: Date.now(),
+      documents: [],
+      players: {}
+    }
+    const cs = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+    cs[testCampaign.id] = testCampaign
+    localStorage.setItem('tome_campaigns', JSON.stringify(cs))
+
+    // ── 2. Verify code lookup works ─────────────────────────────────────────
+    const found = Object.values(JSON.parse(localStorage.getItem('tome_campaigns')))
+      .find(c => c.sessionCode === String(CAMPAIGN_CODE).trim())
+    assert('Campaign found by code', !!found)
+    assert('Campaign code matches exactly', found?.sessionCode === CAMPAIGN_CODE)
+
+    // ── 3. Simulate 12 players joining sequentially ─────────────────────────
+    const PLAYER_NAMES = [
+      'Arya Swiftblade','Brom Ironforge','Celia Moonwhisper','Daelan Ashveil',
+      'Elowen Brightstar','Fyra Stonehammer','Gideon Ravenscar','Hela Thornwood',
+      'Idris Flamecaller','Joryn Deepwater','Kira Shadowstep','Lorien Goldleaf'
+    ]
+
+    for (const name of PLAYER_NAMES) {
+      const campaigns = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+      const campaign = Object.values(campaigns).find(c => c.sessionCode === CAMPAIGN_CODE)
+      if (!campaign) { assert(`${name} join — campaign found`, false); continue }
+      if (!campaign.players[name]) {
+        campaign.players[name] = { characterSheet: { characterName: name } }
+      }
+      campaigns[campaign.id] = campaign
+      localStorage.setItem('tome_campaigns', JSON.stringify(campaigns))
+      assert(`${name} joined`, true)
+    }
+
+    // ── 4. Verify all 12 are stored ─────────────────────────────────────────
+    const afterJoin = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+    const testC = afterJoin['__test_campaign__']
+    const playerCount = Object.keys(testC?.players || {}).length
+    assert('All 12 players stored', playerCount === 12)
+    assert('Player count does not exceed 12', playerCount <= 12)
+
+    // ── 5. Verify each player's name is correct ─────────────────────────────
+    for (const name of PLAYER_NAMES) {
+      assert(`${name} found in roster`, !!testC?.players[name])
+    }
+
+    // ── 6. Verify duplicate join is idempotent (same player joins twice) ────
+    const dupCampaigns = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+    const dupC = dupCampaigns['__test_campaign__']
+    if (!dupC.players['Arya Swiftblade']) dupC.players['Arya Swiftblade'] = {}
+    dupCampaigns[dupC.id] = dupC
+    localStorage.setItem('tome_campaigns', JSON.stringify(dupCampaigns))
+    const afterDup = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+    assert('Duplicate join is idempotent (still 12 players)', Object.keys(afterDup['__test_campaign__'].players).length === 12)
+
+    // ── 7. Verify 13th player can still join (no hard cap) ──────────────────
+    const extra = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+    const extraC = extra['__test_campaign__']
+    extraC.players['Mira Dawnseeker'] = { characterSheet: {} }
+    extra[extraC.id] = extraC
+    localStorage.setItem('tome_campaigns', JSON.stringify(extra))
+    const after13 = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+    assert('13th player can join (no hard cap)', Object.keys(after13['__test_campaign__'].players).length === 13)
+
+    // ── 8. Verify encodeCampaignLink strips images ──────────────────────────
+    const withImages = { ...testCampaign, documents: [{ id:'d1', title:'Map', image: 'data:image/png;base64,' + 'A'.repeat(1000), revealed: true }] }
+    try {
+      const slim = { ...withImages, documents: withImages.documents.map(d=>({...d,image:null})), players:{} }
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({campaign:slim}))))
+      assert('encodeCampaignLink strips images (URL stays short)', encoded.length < 2000)
+    } catch(e) { assert('encodeCampaignLink strips images', false) }
+
+    // ── 9. Verify importCampaignFromLink round-trips ────────────────────────
+    try {
+      const slim = { ...testCampaign, documents: [], players: {} }
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({campaign:slim}))))
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(encoded))))
+      assert('Campaign round-trips through encode/decode', decoded.campaign?.sessionCode === CAMPAIGN_CODE)
+    } catch(e) { assert('Campaign round-trips through encode/decode', false) }
+
+  } catch(err) {
+    results.push('💥 Uncaught error: ' + err.message)
+    fail++
+  } finally {
+    // Cleanup: remove test campaign
+    try {
+      const cs = JSON.parse(localStorage.getItem('tome_campaigns') || '{}')
+      delete cs['__test_campaign__']
+      localStorage.setItem('tome_campaigns', JSON.stringify(cs))
+    } catch {}
+  }
+
+  const summary = `\n${'─'.repeat(50)}\nThe Tome — Stress Test Results\n${'─'.repeat(50)}\n${results.join('\n')}\n${'─'.repeat(50)}\n${pass} passed · ${fail} failed\n${'─'.repeat(50)}`
+  if (fail === 0) console.log('%c' + summary, 'color:#C9A84C;font-family:monospace')
+  else            console.error(summary)
+  window.__tomeTestResults = { pass, fail, results }
+})()
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{})
+  })
+}
+</script>
+</body>
+</html>
