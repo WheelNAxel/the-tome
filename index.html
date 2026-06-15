@@ -199,6 +199,8 @@ h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
 .death-pip{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;cursor:pointer}
 .slot-pip{width:16px;height:16px;border-radius:50%;border:2px solid var(--gold-dark);cursor:pointer;transition:background .15s;display:inline-block}
 .slot-pip.spent{background:rgba(201,168,76,.5)}
+.spell-row-item{padding:.45rem .4rem;border-radius:5px;border:1px solid transparent;cursor:pointer;transition:background .12s,border-color .12s;margin-bottom:.2rem}
+.spell-row-item:hover{background:rgba(201,168,76,.07);border-color:rgba(201,168,76,.18)}
 .map-viewer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:flex;flex-direction:column}
 .map-toolbar{padding:.5rem 1rem;border-bottom:1px solid var(--gold-dark);display:flex;gap:.5rem;align-items:center;flex-shrink:0}
 .map-canvas{flex:1;overflow:hidden;position:relative;cursor:grab}
@@ -945,7 +947,7 @@ function emptySheet(name='') {
     equipment:'',personalityTraits:'',ideals:'',bonds:'',flaws:'',
     featuresAndTraits:'',spellcastingAbility:'',spellSaveDC:'',spellAttackBonus:'',
     spellSlots:{1:{total:0,used:0},2:{total:0,used:0},3:{total:0,used:0},4:{total:0,used:0},5:{total:0,used:0},6:{total:0,used:0},7:{total:0,used:0},8:{total:0,used:0},9:{total:0,used:0}},
-    spells:'',backstory:'',notes:'',
+    spells:'',spellList:[],backstory:'',notes:'',
   }
 }
 
@@ -1009,43 +1011,153 @@ const BACKGROUND_DATA = {
 
 const ALIGNMENTS = {1:'Lawful Good',2:'Neutral Good',3:'Chaotic Good',4:'Lawful Neutral',5:'True Neutral',6:'Chaotic Neutral',7:'Lawful Evil',8:'Neutral Evil',9:'Chaotic Evil'}
 
+// ── Level-Up Data ─────────────────────────────────────────────────────────────
+const PROF_BY_LEVEL = [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6]
+
+const ASI_LEVELS = {
+  Fighter:[4,6,8,12,14,16,19],
+  Rogue:[4,8,10,12,16,19],
+  _default:[4,8,12,16,19],
+}
+
+const SUBCLASS_LEVEL = {Cleric:1,Sorcerer:1,Warlock:1,Druid:2,Wizard:2,_default:3}
+
+const SUBCLASSES = {
+  Barbarian:['Path of the Berserker','Path of the Totem Warrior','Path of Storm Herald','Path of Wild Magic','Path of the Zealot','Path of the Beast'],
+  Bard:['College of Lore','College of Valor','College of Glamour','College of Swords','College of Eloquence','College of Creation'],
+  Cleric:['Life Domain','Light Domain','Trickery Domain','Knowledge Domain','Nature Domain','Tempest Domain','War Domain','Death Domain','Forge Domain','Grave Domain'],
+  Druid:['Circle of the Land','Circle of the Moon','Circle of Stars','Circle of Spores','Circle of Wildfire','Circle of Dreams'],
+  Fighter:['Battle Master','Champion','Eldritch Knight','Arcane Archer','Cavalier','Echo Knight','Samurai','Psi Warrior'],
+  Monk:['Way of the Open Hand','Way of Shadow','Way of the Four Elements','Way of the Astral Self','Way of the Kensei','Way of Mercy','Way of the Sun Soul'],
+  Paladin:['Oath of Devotion','Oath of the Ancients','Oath of Vengeance','Oath of Glory','Oath of Conquest','Oath of Redemption','Oathbreaker'],
+  Ranger:['Hunter','Beast Master','Gloom Stalker','Horizon Walker','Monster Slayer','Fey Wanderer','Swarmkeeper'],
+  Rogue:['Thief','Arcane Trickster','Assassin','Inquisitive','Mastermind','Scout','Soulknife','Swashbuckler'],
+  Sorcerer:['Draconic Bloodline','Wild Magic','Divine Soul','Shadow Magic','Storm Sorcery','Aberrant Mind','Clockwork Soul'],
+  Warlock:['The Archfey','The Fiend','The Great Old One','The Hexblade','The Fathomless','The Genie','The Undead'],
+  Wizard:['School of Evocation','School of Abjuration','School of Conjuration','School of Divination','School of Enchantment','School of Illusion','School of Necromancy','School of Transmutation','Bladesinging','Order of Scribes'],
+}
+
+const CLASS_LEVEL_FEATURES = {
+  Barbarian:{2:['Reckless Attack','Danger Sense'],3:['Primal Path Feature'],5:['Extra Attack','Fast Movement (+10 ft)'],6:['Primal Path Feature'],7:['Feral Instinct'],9:['Brutal Critical (1 extra die)'],10:['Primal Path Feature'],11:['Relentless Rage'],14:['Primal Path Feature'],15:['Persistent Rage'],20:['Primal Champion: +4 STR & +4 CON']},
+  Bard:{2:['Jack of All Trades','Song of Rest (d6)'],3:['Bard College Feature','Expertise (2 more skills)'],5:['Bardic Inspiration: d8','Font of Inspiration'],6:['Countercharm','Bard College Feature'],10:['Magical Secrets (2 spells from any list)','Bardic Inspiration: d10'],14:['Bard College Feature'],15:['Bardic Inspiration: d12'],18:['Magical Secrets (2 more)'],20:['Superior Inspiration']},
+  Cleric:{2:['Channel Divinity (1/rest)','Divine Domain Feature'],5:['Destroy Undead CR 1/2'],6:['Channel Divinity (2/rest)','Divine Domain Feature'],8:['Destroy Undead CR 1','Divine Domain Feature'],10:['Divine Intervention'],11:['Destroy Undead CR 2'],14:['Destroy Undead CR 3'],17:['Destroy Undead CR 4','Divine Domain Feature'],18:['Channel Divinity (3/rest)'],20:['Divine Intervention (guaranteed)']},
+  Druid:{2:['Wild Shape (CR 1/4 + swim)','Druid Circle Feature'],4:['Wild Shape (CR 1/2 + climb)'],5:['Wild Shape (CR 1)'],6:['Druid Circle Feature'],8:['Wild Shape (CR 2)'],10:['Druid Circle Feature'],12:['Wild Shape (CR 3)'],14:['Druid Circle Feature'],16:['Wild Shape (CR 4)'],18:['Timeless Body','Beast Spells'],20:['Archdruid (unlimited Wild Shape)']},
+  Fighter:{2:['Action Surge (1/rest)'],3:['Martial Archetype Feature'],5:['Extra Attack (2 total)'],7:['Martial Archetype Feature'],9:['Indomitable (1/long rest)'],10:['Martial Archetype Feature'],11:['Extra Attack (3 total)'],13:['Indomitable (2/long rest)'],15:['Martial Archetype Feature'],17:['Action Surge (2/rest)','Indomitable (3/long rest)'],18:['Martial Archetype Feature'],20:['Extra Attack (4 total)']},
+  Monk:{2:['Ki Points (2)','Unarmored Movement (+10 ft)','Flurry of Blows / Patient Defense / Step of the Wind'],3:['Monastic Tradition Feature','Deflect Missiles'],4:['Slow Fall'],5:['Extra Attack','Stunning Strike','Martial Arts: d6'],6:['Ki-Empowered Strikes','Monastic Tradition Feature','Unarmored Movement (+15 ft)'],7:['Evasion','Stillness of Mind'],10:['Purity of Body','Unarmored Movement (+20 ft)','Martial Arts: d8'],11:['Monastic Tradition Feature'],13:['Tongue of the Sun and Moon','Unarmored Movement (+25 ft)'],14:['Diamond Soul (proficiency in all saves)'],15:['Timeless Body'],16:['Unarmored Movement (+30 ft)','Martial Arts: d10'],18:['Empty Body','Monastic Tradition Feature'],20:['Perfect Self (regain 4 ki on initiative)','Martial Arts: d12']},
+  Paladin:{2:['Fighting Style','Spellcasting','Divine Smite'],3:['Divine Health','Sacred Oath Feature'],5:['Extra Attack'],6:['Aura of Protection (10 ft — CHA mod to saves)'],7:['Sacred Oath Feature'],9:['Aura of Courage (10 ft — immune to frightened)'],10:['Sacred Oath Feature'],11:['Improved Divine Smite (+1d8 weapon attacks)'],14:['Cleansing Touch'],18:['Aura range: 30 ft'],20:['Sacred Oath Capstone']},
+  Ranger:{2:['Fighting Style','Spellcasting'],3:['Primeval Awareness','Ranger Archetype Feature'],5:['Extra Attack'],6:['Favored Enemy & Natural Explorer improvements'],7:['Ranger Archetype Feature'],10:['Hide in Plain Sight'],11:['Ranger Archetype Feature'],14:['Vanish'],15:['Ranger Archetype Feature'],18:['Feral Senses'],20:['Foe Slayer']},
+  Rogue:{2:['Cunning Action'],3:['Roguish Archetype Feature'],5:['Uncanny Dodge','Sneak Attack: 3d6'],6:['Expertise (2 more skills)'],7:['Evasion'],9:['Roguish Archetype Feature'],11:['Reliable Talent'],13:['Roguish Archetype Feature'],14:['Blindsense'],15:['Slippery Mind (WIS save proficiency)'],17:['Roguish Archetype Feature'],18:['Elusive'],20:['Stroke of Luck']},
+  Sorcerer:{2:['Font of Magic (2 sorcery points)'],3:['Metamagic (choose 2)','Sorcerous Origin Feature'],6:['Sorcerous Origin Feature'],10:['Metamagic (3rd option)'],14:['Sorcerous Origin Feature'],17:['Metamagic (4th option)'],18:['Sorcerous Origin Feature'],20:['Sorcerous Restoration (4 sorcery points on short rest)']},
+  Warlock:{2:['Eldritch Invocations (2)','2 Pact Magic slots'],3:['Pact Boon — choose: Pact of the Blade / Chain / Tome'],4:['Eldritch Invocations (3)'],5:['3rd-level Pact Magic slots'],6:['Otherworldly Patron Feature','Eldritch Invocations (4)'],7:['4th-level Pact Magic slots'],8:['Eldritch Invocations (5)'],9:['5th-level Pact Magic slots'],10:['Otherworldly Patron Feature'],11:['Mystic Arcanum (6th-level, 1/long rest)','3 Pact Magic slots'],12:['Eldritch Invocations (6)'],13:['Mystic Arcanum (7th-level, 1/long rest)'],14:['Otherworldly Patron Feature'],15:['Mystic Arcanum (8th-level, 1/long rest)'],17:['Mystic Arcanum (9th-level, 1/long rest)'],18:['Eldritch Invocations (8)'],20:['Eldritch Master (regain all Pact Magic slots, 1/long rest)']},
+  Wizard:{2:['Arcane Tradition Feature'],6:['Arcane Tradition Feature'],10:['Arcane Tradition Feature'],14:['Arcane Tradition Feature'],18:['Spell Mastery (cast 1st & 2nd level spells at will)'],20:['Signature Spells (two free 3rd-level spells per short rest)']},
+}
+
+// Spell slot tables indexed by class level (0-indexed: index 0 = level 1)
+// Each entry: [slots1, slots2, ..., slots9]
+const FULL_CASTER_SLOTS=[
+  [2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],
+  [4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],[4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],
+  [4,3,3,3,1,0,0,0,0],[4,3,3,3,2,0,0,0,0],[4,3,3,3,2,1,0,0,0],[4,3,3,3,2,1,0,0,0],
+  [4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,1,0],[4,3,3,3,2,1,1,1,0],
+  [4,3,3,3,2,1,1,1,1],[4,3,3,3,3,1,1,1,1],[4,3,3,3,3,2,1,1,1],[4,3,3,3,3,2,2,1,1],
+]
+const HALF_CASTER_SLOTS=[
+  [0,0,0,0,0,0,0,0,0],[2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],
+  [4,2,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],
+  [4,3,2,0,0,0,0,0,0],[4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],
+  [4,3,3,1,0,0,0,0,0],[4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],
+  [4,3,3,3,1,0,0,0,0],[4,3,3,3,1,0,0,0,0],[4,3,3,3,2,0,0,0,0],[4,3,3,3,2,0,0,0,0],
+]
+// Warlock pact magic: [numSlots, slotLevel] per level
+const WARLOCK_PACT_SLOTS=[[1,1],[2,1],[2,2],[2,2],[2,3],[2,3],[2,4],[2,4],[2,5],[2,5],[3,5],[3,5],[3,5],[3,5],[3,5],[3,5],[4,5],[4,5],[4,5],[4,5]]
+const CLASS_SLOT_TYPE={Bard:'full',Cleric:'full',Druid:'full',Sorcerer:'full',Wizard:'full',Paladin:'half',Ranger:'half',Warlock:'warlock',Barbarian:'none',Fighter:'none',Monk:'none',Rogue:'none'}
+
+function getSlotsForClass(cls, level) {
+  const type = CLASS_SLOT_TYPE[cls] || 'none'
+  const idx = Math.max(0, Math.min(19, level - 1))
+  const slots = {}
+  for(let i=1;i<=9;i++) slots[i] = {total:0, used:0}
+  if(type === 'full') {
+    FULL_CASTER_SLOTS[idx].forEach((n,i)=>{ slots[i+1]={total:n,used:0} })
+  } else if(type === 'half') {
+    HALF_CASTER_SLOTS[idx].forEach((n,i)=>{ slots[i+1]={total:n,used:0} })
+  } else if(type === 'warlock') {
+    const [num, slvl] = WARLOCK_PACT_SLOTS[idx]
+    slots[slvl] = {total:num, used:0}
+  }
+  return slots
+}
+
+// Skills available to each class, and how many choices
+const CLASS_SKILLS = {
+  Barbarian:['animalHandling','athletics','intimidation','nature','perception','survival'],
+  Bard:Object.keys({acrobatics:1,animalHandling:1,arcana:1,athletics:1,deception:1,history:1,insight:1,intimidation:1,investigation:1,medicine:1,nature:1,perception:1,performance:1,persuasion:1,religion:1,sleightOfHand:1,stealth:1,survival:1}),
+  Cleric:['history','insight','medicine','persuasion','religion'],
+  Druid:['arcana','animalHandling','insight','medicine','nature','perception','religion','survival'],
+  Fighter:['acrobatics','animalHandling','athletics','history','insight','intimidation','perception','survival'],
+  Monk:['acrobatics','athletics','history','insight','religion','stealth'],
+  Paladin:['athletics','insight','intimidation','medicine','persuasion','religion'],
+  Ranger:['animalHandling','athletics','insight','investigation','nature','perception','stealth','survival'],
+  Rogue:['acrobatics','athletics','deception','insight','intimidation','investigation','perception','performance','persuasion','sleightOfHand','stealth'],
+  Sorcerer:['arcana','deception','insight','intimidation','persuasion','religion'],
+  Warlock:['arcana','deception','history','intimidation','investigation','nature','religion'],
+  Wizard:['arcana','history','insight','investigation','medicine','religion'],
+}
+const CLASS_SKILL_CHOICES = {Barbarian:2,Bard:3,Cleric:2,Druid:2,Fighter:2,Monk:2,Paladin:2,Ranger:3,Rogue:4,Sorcerer:2,Warlock:2,Wizard:2}
+
+const STANDARD_ARRAY = [15,14,13,12,10,8]
+
 // Build a sheet from template selections
-function sheetFromTemplate(name, cls, race, bg, level=1) {
+function sheetFromTemplate(name, cls, race, bg, level=1, abilityScores={}, extraSkills=[]) {
   const cd = CLASS_DATA[cls] || {}
   const rd = RACE_DATA[race] || {}
   const bd = BACKGROUND_DATA[bg] || {}
-  const profBonus = Math.ceil(1 + level/4)
-  const conMod = Math.floor(((rd.asi?.con||0) + 10 - 10)/2)
-  const hpMax = (cd.hpBase||8) + conMod + (level-1)*Math.ceil((parseInt(cd.hitDice?.replace(/\d+d/,''))||8)/2+1+conMod)
+  const profBonus = PROF_BY_LEVEL[Math.min(19, level-1)]
+  const asi = rd.asi || {}
+  const conScore = (abilityScores.con || 10) + (asi.con||0)
+  const conMod = Math.floor((conScore - 10) / 2)
+  const dieAvg = Math.ceil((parseInt(cd.hitDice?.replace(/\d+d/,''))||8)/2+1)
+  const hpMax = (cd.hpBase||8) + conMod + (level-1) * (dieAvg + conMod)
 
   const saves = {}
   ABILITIES.forEach(a => saves[a] = !!(cd.saves?.[a]))
   const skills = {}
   Object.keys(SKILLS).forEach(s => skills[s] = false)
-  ;(bd.skills||[]).forEach(s => { if(skills.hasOwnProperty(s)) skills[s]=true })
+  ;(bd.skills||[]).forEach(s => { if(s in skills) skills[s]=true })
+  ;extraSkills.forEach(s => { if(s in skills) skills[s]=true })
 
-  const asi = rd.asi || {}
+  // Build features text covering all levels up to current
+  const allFeatures = [
+    rd.traits ? `[${race} Racial Traits]\n${rd.traits}` : '',
+    cd.features ? `[${cls} Level 1 Features]\n${cd.features}` : '',
+    bd.feature ? `[${bg} Background]\n${bd.feature}` : '',
+  ]
+  for(let lvl=2; lvl<=level; lvl++) {
+    const feats = CLASS_LEVEL_FEATURES[cls]?.[lvl]
+    if(feats) allFeatures.push(`[${cls} Level ${lvl}]\n${feats.join(', ')}`)
+  }
+
   return {
     ...emptySheet(name),
     characterName: name,
-    class: cls,
-    race: race,
-    background: bg,
-    level,
+    class: cls, race, background: bg, level,
     proficiencyBonus: profBonus,
     hitDice: cd.hitDice||'1d8',
     hpMax, hpCurrent: hpMax,
     speed: rd.speed||30,
     spellcastingAbility: cd.spellcasting||'',
-    savingThrows: saves,
-    skills,
-    str: 10+(asi.str||0), dex: 10+(asi.dex||0), con: 10+(asi.con||0),
-    int: 10+(asi.int||0), wis: 10+(asi.wis||0), cha: 10+(asi.cha||0),
-    featuresAndTraits: [
-      rd.traits ? `[${race} Racial Traits]\n${rd.traits}` : '',
-      cd.features ? `\n[${cls} Class Features]\n${cd.features}` : '',
-      bd.feature ? `\n[${bg} Background]\n${bd.feature}` : '',
-    ].filter(Boolean).join('\n'),
+    savingThrows: saves, skills,
+    str: (abilityScores.str||10)+(asi.str||0),
+    dex: (abilityScores.dex||10)+(asi.dex||0),
+    con: conScore,
+    int: (abilityScores.int||10)+(asi.int||0),
+    wis: (abilityScores.wis||10)+(asi.wis||0),
+    cha: (abilityScores.cha||10)+(asi.cha||0),
+    spellSlots: getSlotsForClass(cls, level),
+    spellcastingAbility: cd.spellcasting||'',
+    spellSaveDC: cd.spellcasting ? 8 + profBonus + Math.floor(((abilityScores[cd.spellcasting?.toLowerCase()]||10)+(asi[cd.spellcasting?.toLowerCase()]||0)-10)/2) : '',
+    spellAttackBonus: cd.spellcasting ? `+${profBonus + Math.floor(((abilityScores[cd.spellcasting?.toLowerCase()]||10)+(asi[cd.spellcasting?.toLowerCase()]||0)-10)/2)}` : '',
+    featuresAndTraits: allFeatures.filter(Boolean).join('\n\n'),
     equipment: [cd.equipment, bd.equipment].filter(Boolean).join('\n'),
   }
 }
@@ -1610,6 +1722,369 @@ function LibraryTab({ campaignId, onUpdate, isDM }) {
   )
 }
 
+// ── Character Creation Wizard ─────────────────────────────────────────────────
+function CharacterCreationWizard({ playerName, onApply, onBack }) {
+  const [step, setStep] = useState(0) // 0=race 1=class 2=bg 3=scores 4=skills 5=finalize
+  const [race, setRace] = useState('')
+  const [cls, setCls] = useState('')
+  const [bg, setBg] = useState('')
+  // Standard array assignment: map ability -> value
+  const [assigned, setAssigned] = useState({str:null,dex:null,con:null,int:null,wis:null,cha:null})
+  const [pending, setPending] = useState(null) // which value is being placed
+  const [chosenSkills, setChosenSkills] = useState([])
+  const [name, setName] = useState(playerName||'')
+  const [subclass, setSubclass] = useState('')
+
+  const usedValues = Object.values(assigned).filter(v=>v!==null)
+  const availableValues = STANDARD_ARRAY.filter(v=>!usedValues.includes(v))
+
+  function assignValue(ab) {
+    if(pending===null) return
+    setAssigned(a=>({...a,[ab]:pending}))
+    setPending(null)
+  }
+  function clearAssign(ab) { setAssigned(a=>({...a,[ab]:null})) }
+
+  function toggleSkill(sk) {
+    const max = CLASS_SKILL_CHOICES[cls]||2
+    const bgSkills = BACKGROUND_DATA[bg]?.skills||[]
+    if(bgSkills.includes(sk)) return // bg skill, not toggleable
+    if(chosenSkills.includes(sk)) {
+      setChosenSkills(cs=>cs.filter(s=>s!==sk))
+    } else if(chosenSkills.length < max) {
+      setChosenSkills(cs=>[...cs,sk])
+    }
+  }
+
+  function canAdvance() {
+    if(step===0) return !!race
+    if(step===1) return !!cls
+    if(step===2) return !!bg
+    if(step===3) return Object.values(assigned).every(v=>v!==null)
+    if(step===4) return chosenSkills.length === (CLASS_SKILL_CHOICES[cls]||2)
+    if(step===5) return !!name.trim()
+    return true
+  }
+
+  function finish() {
+    const scores = {}
+    ABILITIES.forEach(a => scores[a] = assigned[a]||10)
+    const sheet = sheetFromTemplate(name.trim(), cls, race, bg, 1, scores, chosenSkills)
+    if(subclass) sheet.subclass = subclass
+    onApply(sheet)
+  }
+
+  const rd = RACE_DATA[race]||{}
+  const cd = CLASS_DATA[cls]||{}
+  const bd = BACKGROUND_DATA[bg]||{}
+  const availClassSkills = (CLASS_SKILLS[cls]||[]).filter(s=>!(BACKGROUND_DATA[bg]?.skills||[]).includes(s))
+  const bgSkills = bd.skills||[]
+  const maxSkills = CLASS_SKILL_CHOICES[cls]||2
+  const subclassLvl = SUBCLASS_LEVEL[cls]||SUBCLASS_LEVEL._default
+  const subs = SUBCLASSES[cls]||[]
+
+  const STEPS = ['Race','Class','Background','Ability Scores','Skills','Finalize']
+  const asi = rd.asi||{}
+
+  return (
+    <div className="modal-overlay" onClick={onBack}>
+      <div className="import-modal-inner" style={{maxWidth:760}} onClick={e=>e.stopPropagation()}>
+        {/* Step bar */}
+        <div className="flex items-center justify-between" style={{marginBottom:'1rem'}}>
+          <div className="flex gap-1" style={{flexWrap:'wrap'}}>
+            {STEPS.map((s,i)=>(
+              <span key={i} style={{fontSize:'.72rem',padding:'.2rem .5rem',borderRadius:3,
+                background: i===step?'var(--gold)':i<step?'rgba(201,168,76,.3)':'rgba(255,255,255,.05)',
+                color: i===step?'#1a1209':i<step?'var(--gold-dark)':'rgba(244,232,193,.4)',
+                fontFamily:'Cinzel,serif',cursor:i<step?'pointer':'default'
+              }} onClick={()=>{if(i<step)setStep(i)}}>{i+1}. {s}</span>
+            ))}
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>✕</button>
+        </div>
+
+        <div style={{overflow:'auto',maxHeight:'65vh'}}>
+
+        {/* STEP 0 — RACE */}
+        {step===0&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.75rem'}}>Choose Your Race</h3>
+          <div className="race-bg-grid">
+            {Object.entries(RACE_DATA).map(([r,rd])=>(
+              <button key={r} className={`race-btn${race===r?' selected':''}`} onClick={()=>setRace(r)}>
+                <strong>{r}</strong>
+                <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.5)',marginTop:'.2rem'}}>
+                  {Object.entries(rd.asi||{}).map(([a,v])=>`+${v} ${a.toUpperCase()}`).join(', ')} · {rd.speed} ft
+                </div>
+              </button>
+            ))}
+          </div>
+          {race&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginTop:'1rem',fontSize:'.83rem'}}>
+            <strong style={{color:'var(--gold)'}}>{race} Traits: </strong>
+            <span style={{color:'rgba(244,232,193,.8)'}}>{rd.traits}</span>
+          </div>}
+        </div>}
+
+        {/* STEP 1 — CLASS */}
+        {step===1&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.75rem'}}>Choose Your Class</h3>
+          <div className="class-grid">
+            {Object.entries(CLASS_DATA).map(([c,cd])=>(
+              <div key={c} className={`class-card${cls===c?' selected':''}`} onClick={()=>setCls(c)}>
+                <div className="class-icon">{cd.icon}</div>
+                <div className="class-name">{c}</div>
+                <div className="class-dice">{cd.hitDice} · {cd.primary}</div>
+              </div>
+            ))}
+          </div>
+          {cls&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginTop:'1rem',fontSize:'.83rem'}}>
+            <div style={{marginBottom:'.4rem'}}><strong style={{color:'var(--gold)'}}>{cls} Features: </strong><span style={{color:'rgba(244,232,193,.8)'}}>{cd.features}</span></div>
+            <div style={{color:'rgba(244,232,193,.55)',fontSize:'.78rem'}}>Saving Throws: {Object.keys(cd.saves||{}).map(a=>a.toUpperCase()).join(', ')} · Subclass at level {subclassLvl}</div>
+          </div>}
+        </div>}
+
+        {/* STEP 2 — BACKGROUND */}
+        {step===2&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.75rem'}}>Choose Your Background</h3>
+          <div className="race-bg-grid">
+            {Object.entries(BACKGROUND_DATA).map(([b,bd])=>(
+              <button key={b} className={`race-btn${bg===b?' selected':''}`} onClick={()=>setBg(b)}>
+                <strong>{b}</strong>
+                <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.5)',marginTop:'.2rem'}}>{bd.skills.map(s=>SKILL_NAMES[s]||s).join(', ')}</div>
+              </button>
+            ))}
+          </div>
+          {bg&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginTop:'1rem',fontSize:'.83rem'}}>
+            <strong style={{color:'var(--gold)'}}>{bg} Feature: </strong><span style={{color:'rgba(244,232,193,.8)'}}>{bd.feature}</span>
+            <div style={{marginTop:'.3rem',color:'rgba(244,232,193,.55)',fontSize:'.78rem'}}>Equipment: {bd.equipment}</div>
+          </div>}
+        </div>}
+
+        {/* STEP 3 — ABILITY SCORES */}
+        {step===3&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.25rem'}}>Assign Ability Scores</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.6)',marginBottom:'1rem'}}>
+            Standard array: {STANDARD_ARRAY.join(', ')}. Click a value to pick it up, then click a stat to assign it. Racial bonuses shown in gold.
+          </p>
+          {/* Available values */}
+          <div className="flex gap-2" style={{marginBottom:'1.25rem',flexWrap:'wrap'}}>
+            {STANDARD_ARRAY.map((v,i)=>{
+              const taken = usedValues.includes(v) && usedValues.filter(x=>x===v).length >= STANDARD_ARRAY.filter(x=>x===v).length
+              return <button key={i}
+                className={`btn btn-sm${pending===v?' btn-primary':taken?' btn-ghost':' btn-ghost'}`}
+                style={{opacity:taken?.4:1,minWidth:44,fontFamily:'Cinzel,serif',fontSize:'1rem',fontWeight:600,
+                  border:pending===v?'1px solid var(--gold)':undefined}}
+                onClick={()=>{if(!taken)setPending(pending===v?null:v)}}
+                disabled={taken}>{v}</button>
+            })}
+            {pending!==null&&<span style={{fontSize:'.8rem',color:'var(--gold)',alignSelf:'center'}}>← click a stat to place {pending}</span>}
+          </div>
+          {/* Stat boxes */}
+          <div className="cs-grid cs-grid-3" style={{gap:'.6rem'}}>
+            {ABILITIES.map(ab=>{
+              const val = assigned[ab]
+              const bonus = asi[ab]||0
+              const total = val!==null ? val+bonus : null
+              return <div key={ab} style={{background:'rgba(0,0,0,.25)',border:`1px solid ${val!==null?'rgba(201,168,76,.4)':'rgba(255,255,255,.08)'}`,borderRadius:6,padding:'.75rem',textAlign:'center',cursor:pending!==null?'pointer':'default',transition:'border-color .15s'}}
+                onClick={()=>val===null?assignValue(ab):clearAssign(ab)}>
+                <div style={{fontFamily:'Cinzel,serif',fontSize:'.7rem',color:'var(--gold-dark)',letterSpacing:'.1em'}}>{ab.toUpperCase()}</div>
+                {bonus>0&&<div style={{fontSize:'.65rem',color:'var(--gold)',marginBottom:'.2rem'}}>+{bonus} racial</div>}
+                <div style={{fontSize:'1.6rem',fontFamily:'Cinzel,serif',color:val!==null?'var(--parchment)':'rgba(244,232,193,.2)',fontWeight:700}}>{total!==null?total:'—'}</div>
+                {val!==null&&<div style={{fontSize:'.72rem',color:'rgba(244,232,193,.5)',marginTop:'.1rem'}}>{val}{bonus>0?`+${bonus}`:''} · {modStr(total)}</div>}
+                {val!==null&&<div style={{fontSize:'.65rem',color:'rgba(232,112,112,.6)',marginTop:'.2rem',cursor:'pointer'}} onClick={e=>{e.stopPropagation();clearAssign(ab)}}>✕ clear</div>}
+              </div>
+            })}
+          </div>
+        </div>}
+
+        {/* STEP 4 — SKILLS */}
+        {step===4&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.25rem'}}>Choose Skill Proficiencies</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.6)',marginBottom:'1rem'}}>
+            As a {cls}, choose <strong style={{color:'var(--gold)'}}>{maxSkills}</strong> skills from the list below. ({chosenSkills.length}/{maxSkills} chosen)
+            {bgSkills.length>0&&<> · Background gives: <strong style={{color:'var(--gold-dark)'}}>{bgSkills.map(s=>SKILL_NAMES[s]).join(', ')}</strong></>}
+          </p>
+          <div style={{columns:2,columnGap:'1.5rem'}}>
+            {(CLASS_SKILLS[cls]||[]).map(sk=>{
+              const isBg = bgSkills.includes(sk)
+              const isChosen = chosenSkills.includes(sk) || isBg
+              const maxed = chosenSkills.length >= maxSkills && !isBg && !chosenSkills.includes(sk)
+              return <div key={sk} className="skill-row" style={{breakInside:'avoid',cursor:isBg?'default':'pointer',opacity:maxed?.5:1,marginBottom:'.3rem'}}
+                onClick={()=>!isBg&&toggleSkill(sk)}>
+                <input type="checkbox" className="skill-check" checked={isChosen} onChange={()=>{}} disabled={isBg}/>
+                <span className="skill-name">{SKILL_NAMES[sk]||sk} {isBg?<span style={{fontSize:'.65rem',color:'var(--gold-dark)'}}>(bg)</span>:null}</span>
+              </div>
+            })}
+          </div>
+        </div>}
+
+        {/* STEP 5 — FINALIZE */}
+        {step===5&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'1rem'}}>Finalize Your Character</h3>
+          <div className="form-group">
+            <label className="form-label">Character Name</label>
+            <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Theron Brightblade" autoFocus/>
+          </div>
+          {subs.length>0&&<div className="form-group" style={{marginTop:'.75rem'}}>
+            <label className="form-label">Subclass (optional — chosen at level {subclassLvl})</label>
+            <select className="form-input" value={subclass} onChange={e=>setSubclass(e.target.value)} style={{cursor:'pointer'}}>
+              <option value="">— Choose later —</option>
+              {subs.map(s=><option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>}
+          <div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.15)',borderRadius:6,padding:'1rem',marginTop:'1rem',fontSize:'.83rem'}}>
+            <div className="cs-grid cs-grid-2" style={{gap:'.5rem .75rem'}}>
+              <div><span style={{color:'var(--gold-dark)'}}>Race:</span> <strong>{race}</strong></div>
+              <div><span style={{color:'var(--gold-dark)'}}>Class:</span> <strong>{cls}</strong></div>
+              <div><span style={{color:'var(--gold-dark)'}}>Background:</span> <strong>{bg}</strong></div>
+              <div><span style={{color:'var(--gold-dark)'}}>Hit Dice:</span> <strong>{cd.hitDice}</strong></div>
+              {ABILITIES.map(ab=>{
+                const bonus=asi[ab]||0; const total=(assigned[ab]||10)+bonus
+                return <div key={ab}><span style={{color:'var(--gold-dark)'}}>{ab.toUpperCase()}:</span> <strong>{total}</strong> <span style={{color:'rgba(244,232,193,.4)',fontSize:'.75rem'}}>{modStr(total)}{bonus?` (+${bonus} racial)`:''}</span></div>
+              })}
+            </div>
+            {(chosenSkills.length||bgSkills.length)>0&&<div style={{marginTop:'.5rem'}}>
+              <span style={{color:'var(--gold-dark)'}}>Skills:</span> <strong>{[...new Set([...bgSkills,...chosenSkills])].map(s=>SKILL_NAMES[s]).join(', ')}</strong>
+            </div>}
+          </div>
+        </div>}
+
+        </div>{/* end scroll */}
+
+        <div className="flex gap-2" style={{marginTop:'1rem',justifyContent:'space-between'}}>
+          <button className="btn btn-ghost btn-sm" onClick={()=>step===0?onBack():setStep(s=>s-1)}>← Back</button>
+          {step<5
+            ? <button className="btn btn-primary" disabled={!canAdvance()} onClick={()=>setStep(s=>s+1)}>Next →</button>
+            : <button className="btn btn-primary" disabled={!canAdvance()} onClick={finish}>✓ Create Character</button>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Level-Up Modal ────────────────────────────────────────────────────────────
+function LevelUpModal({ sheet, newLevel, onApply, onClose }) {
+  const cls = sheet.class
+  const cd = CLASS_DATA[cls]||{}
+  const newFeatures = CLASS_LEVEL_FEATURES[cls]?.[newLevel]||[]
+  const profBonus = PROF_BY_LEVEL[Math.min(19,newLevel-1)]
+  const dieVal = parseInt(cd.hitDice?.replace(/\d+d/,'')||'8')
+  const conMod = Math.floor((sheet.con-10)/2)
+  const hpGain = Math.ceil(dieVal/2)+1+conMod  // average roll
+  const newHpMax = (sheet.hpMax||0) + hpGain
+  const newSlots = getSlotsForClass(cls, newLevel)
+
+  // ASI check
+  const asiLevels = ASI_LEVELS[cls]||ASI_LEVELS._default
+  const isASI = asiLevels.includes(newLevel)
+
+  // Subclass check
+  const subclassLvl = SUBCLASS_LEVEL[cls]||SUBCLASS_LEVEL._default
+  const isSubclassLevel = newLevel === subclassLvl && !sheet.subclass
+  const subs = SUBCLASSES[cls]||[]
+
+  const [asiChoice, setAsiChoice] = useState('pp2') // 'pp2'=+2 one, 'p1p1'=+1 two
+  const [asiStat1, setAsiStat1] = useState('')
+  const [asiStat2, setAsiStat2] = useState('')
+  const [chosenSubclass, setChosenSubclass] = useState('')
+
+  function apply() {
+    let updated = {
+      ...sheet,
+      level: newLevel,
+      proficiencyBonus: profBonus,
+      hpMax: newHpMax,
+      hpCurrent: sheet.hpCurrent + hpGain,
+      spellSlots: mergeSlots(sheet.spellSlots||{}, newSlots),
+    }
+    // Apply ASI
+    if(isASI) {
+      if(asiChoice==='pp2' && asiStat1) {
+        updated[asiStat1] = (updated[asiStat1]||10) + 2
+      } else if(asiChoice==='p1p1' && asiStat1 && asiStat2) {
+        updated[asiStat1] = (updated[asiStat1]||10) + 1
+        if(asiStat2!==asiStat1) updated[asiStat2] = (updated[asiStat2]||10) + 1
+        else updated[asiStat1] = (updated[asiStat1]||10) + 1 // same stat = +2
+      }
+    }
+    if(isSubclassLevel && chosenSubclass) updated.subclass = chosenSubclass
+    // Append new features to featuresAndTraits
+    if(newFeatures.length) {
+      const append = `\n\n[${cls} Level ${newLevel}]\n${newFeatures.join('\n')}`
+      updated.featuresAndTraits = (updated.featuresAndTraits||'') + append
+    }
+    onApply(updated)
+  }
+
+  // Merge spell slots (keep used counts, update totals)
+  function mergeSlots(old, fresh) {
+    const result = {}
+    for(let i=1;i<=9;i++) {
+      result[i] = { total: fresh[i]?.total||0, used: Math.min(old[i]?.used||0, fresh[i]?.total||0) }
+    }
+    return result
+  }
+
+  const asiReady = !isASI || (asiChoice==='pp2'&&asiStat1) || (asiChoice==='p1p1'&&asiStat1&&asiStat2)
+  const subReady = !isSubclassLevel || chosenSubclass
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div style={{width:'100%',maxWidth:560,background:'var(--bg-card)',border:'1px solid rgba(201,168,76,.3)',borderRadius:8,padding:'1.5rem',animation:'slideUp .25s ease'}} onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between" style={{marginBottom:'1rem'}}>
+          <h2 style={{color:'var(--gold)',margin:0,fontFamily:'Cinzel,serif'}}>⬆ Level {newLevel}!</h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+
+        <div style={{fontSize:'.85rem',color:'rgba(244,232,193,.7)',marginBottom:'1rem'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.4rem .75rem'}}>
+            <div>❤ HP: +{hpGain} → <strong style={{color:'var(--gold)'}}>{newHpMax} max</strong></div>
+            <div>🎯 Proficiency Bonus: <strong style={{color:'var(--gold)'}}>+{profBonus}</strong></div>
+          </div>
+        </div>
+
+        {newFeatures.length>0&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.18)',borderRadius:6,padding:'.75rem',marginBottom:'1rem'}}>
+          <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',color:'var(--gold-dark)',marginBottom:'.5rem',textTransform:'uppercase',letterSpacing:'.08em'}}>New Features</div>
+          {newFeatures.map((f,i)=><div key={i} style={{color:'var(--parchment)',fontSize:'.85rem',marginBottom:'.2rem'}}>✦ {f}</div>)}
+        </div>}
+
+        {/* ASI Choice */}
+        {isASI&&<div style={{background:'rgba(201,168,76,.07)',border:'1px solid rgba(201,168,76,.25)',borderRadius:6,padding:'.75rem',marginBottom:'1rem'}}>
+          <div style={{fontFamily:'Cinzel,serif',fontSize:'.75rem',color:'var(--gold)',marginBottom:'.6rem'}}>⬆ Ability Score Improvement</div>
+          <div className="flex gap-2" style={{marginBottom:'.6rem'}}>
+            <button className={`btn btn-sm ${asiChoice==='pp2'?'btn-primary':'btn-ghost'}`} onClick={()=>{setAsiChoice('pp2');setAsiStat2('')}}>+2 to one stat</button>
+            <button className={`btn btn-sm ${asiChoice==='p1p1'?'btn-primary':'btn-ghost'}`} onClick={()=>setAsiChoice('p1p1')}>+1 to two stats</button>
+          </div>
+          <div className="flex gap-2">
+            <select className="form-input" value={asiStat1} onChange={e=>setAsiStat1(e.target.value)} style={{flex:1}}>
+              <option value="">— Stat {asiChoice==='pp2'?'(+2)':'1 (+1)'} —</option>
+              {ABILITIES.map(a=><option key={a} value={a}>{ABILITY_NAMES[a]} ({sheet[a]||10} → {(sheet[a]||10)+(asiChoice==='pp2'&&asiStat1===a?2:1)})</option>)}
+            </select>
+            {asiChoice==='p1p1'&&<select className="form-input" value={asiStat2} onChange={e=>setAsiStat2(e.target.value)} style={{flex:1}}>
+              <option value="">— Stat 2 (+1) —</option>
+              {ABILITIES.map(a=><option key={a} value={a}>{ABILITY_NAMES[a]} ({sheet[a]||10} → {(sheet[a]||10)+1+(asiStat1===a?1:0)})</option>)}
+            </select>}
+          </div>
+        </div>}
+
+        {/* Subclass Choice */}
+        {isSubclassLevel&&<div style={{background:'rgba(201,168,76,.07)',border:'1px solid rgba(201,168,76,.25)',borderRadius:6,padding:'.75rem',marginBottom:'1rem'}}>
+          <div style={{fontFamily:'Cinzel,serif',fontSize:'.75rem',color:'var(--gold)',marginBottom:'.6rem'}}>🔱 Choose Your {cls} Subclass</div>
+          <select className="form-input" value={chosenSubclass} onChange={e=>setChosenSubclass(e.target.value)}>
+            <option value="">— Choose a subclass —</option>
+            {subs.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>}
+
+        <div className="flex gap-2" style={{marginTop:'.5rem'}}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!asiReady||!subReady} onClick={apply}>✓ Apply Level Up</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Character Setup / Import Modal
 function CharacterSetupModal({ playerName, campaignId, onApply, onClose, initialMode }) {
   const [mode, setMode] = useState(initialMode || 'choose') // choose | template | ddb | json
@@ -1674,18 +2149,22 @@ function CharacterSetupModal({ playerName, campaignId, onApply, onClose, initial
 
   const selectedClass = CLASS_DATA[tClass]
 
+  if(mode === 'wizard') return (
+    <CharacterCreationWizard playerName={playerName} onApply={onApply} onBack={()=>setMode('choose')}/>
+  )
+
   if(mode === 'choose') return (
     <div className="modal-overlay" onClick={onClose}>
       <div style={{width:'100%',maxWidth:820,animation:'slideUp .25s ease'}} onClick={e=>e.stopPropagation()}>
         <div className="cs-setup-header">
           <h2 style={{color:'var(--gold)'}}>Choose How to Set Up Your Character</h2>
-          <p>Start from a class template, import from D&amp;D Beyond, or paste a JSON export.</p>
+          <p>Start from the step-by-step wizard, import from D&amp;D Beyond, or paste a JSON export.</p>
         </div>
         <div className="cs-setup-cards">
-          <div className="cs-setup-card" onClick={()=>setMode('template')}>
+          <div className="cs-setup-card" onClick={()=>setMode('wizard')}>
             <div className="card-icon">⚔</div>
-            <h3>Class Template</h3>
-            <p>Choose your class, race, and background. The sheet pre-fills with hit dice, proficiencies, starting equipment, and racial bonuses.</p>
+            <h3>Character Creation Wizard</h3>
+            <p>Step-by-step: choose race, class, background, assign ability scores, pick skills, and get a fully built sheet.</p>
           </div>
           <div className="cs-setup-card" onClick={()=>setMode('ddb')}>
             <div className="card-icon">🐉</div>
@@ -1859,8 +2338,22 @@ function CharacterSheet({ campaignId, playerName, readOnly=false }) {
   const [sheet,setSheet]=useState(()=>Storage.getSheet(campaignId,playerName))
   const [saved,setSaved]=useState(false)
   const [showSetup,setShowSetup]=useState(false)
+  const [levelUpData,setLevelUpData]=useState(null) // {newLevel}
+  const prevLevel=useRef(sheet.level)
 
-  function upd(f,v){if(readOnly)return;setSheet(s=>({...s,[f]:v}));setSaved(false)}
+  function upd(f,v){
+    if(readOnly)return
+    setSheet(s=>{
+      const next={...s,[f]:v}
+      // Detect level increase
+      if(f==='level'&&typeof v==='number'&&v>prevLevel.current&&next.class){
+        setLevelUpData({newLevel:v})
+      }
+      if(f==='level') prevLevel.current=v
+      return next
+    })
+    setSaved(false)
+  }
   function updN(path,v){
     if(readOnly)return
     setSheet(s=>{const p=path.split('.'),c={...s};let cur=c;for(let i=0;i<p.length-1;i++){cur[p[i]]={...cur[p[i]]};cur=cur[p[i]]};cur[p[p.length-1]]=v;return c})
@@ -1901,11 +2394,16 @@ function CharacterSheet({ campaignId, playerName, readOnly=false }) {
   return (
     <div className="char-sheet" style={{overflow:'auto',maxHeight:'100%'}}>
       {showSetup&&<CharacterSetupModal playerName={playerName} campaignId={campaignId} onApply={applyImportedSheet} onClose={()=>setShowSetup(false)}/>}
+      {levelUpData&&<LevelUpModal sheet={sheet} newLevel={levelUpData.newLevel}
+        onApply={s=>{setSheet(s);Storage.saveSheet(campaignId,playerName,s);setLevelUpData(null);setSaved(false)}}
+        onClose={()=>setLevelUpData(null)}/>}
       {!readOnly&&(
         <div className="flex items-center justify-between" style={{marginBottom:'1rem',flexWrap:'wrap',gap:'.5rem'}}>
           <h2 style={{fontSize:'1rem'}}>Character Sheet</h2>
           <div className="flex gap-2" style={{flexWrap:'wrap'}}>
             <button className="btn btn-ghost btn-sm" onClick={()=>setShowSetup(true)} title="Templates & Import">⚔ Templates / Import</button>
+            {sheet.class&&<button className="btn btn-ghost btn-sm" style={{color:'var(--gold)',borderColor:'rgba(201,168,76,.4)'}}
+              onClick={()=>setLevelUpData({newLevel:(sheet.level||1)+1})}>⬆ Level Up</button>}
             <button className="btn btn-ghost btn-sm" onClick={exportJSON} title="Export as JSON">⬇ Export JSON</button>
             <button className="btn btn-primary" onClick={handleSave} style={{minWidth:100}}>{saved?'✓ Saved!':'💾 Save'}</button>
           </div>
@@ -2034,7 +2532,19 @@ function CharacterSheet({ campaignId, playerName, readOnly=false }) {
             </div>}
           </div>
         ))}
-        <div className="mt-2"><TA label="Spell List" field="spells" rows={4}/></div>
+        <div className="mt-2">
+          <div className="form-label" style={{marginBottom:'.5rem'}}>Known Spells</div>
+          {(sheet.spellList||[]).length===0&&<div style={{fontSize:'.82rem',color:'rgba(244,232,193,.35)',fontStyle:'italic',marginBottom:'.5rem'}}>No spells added yet. Use the ✨ Spells tab to browse and add spells.</div>}
+          {(sheet.spellList||[]).map((sp,i)=>(
+            <div key={i} className="flex items-center gap-2" style={{marginBottom:'.3rem',background:'rgba(0,0,0,.18)',borderRadius:4,padding:'.3rem .5rem'}}>
+              <span style={{fontSize:'.7rem',background:'rgba(201,168,76,.15)',color:'var(--gold-dark)',padding:'.1rem .35rem',borderRadius:3,fontFamily:'Cinzel,serif',minWidth:18,textAlign:'center'}}>{sp.level===0?'C':sp.level}</span>
+              <span style={{flex:1,fontSize:'.83rem'}}>{sp.name}</span>
+              <span style={{fontSize:'.7rem',color:'rgba(244,232,193,.4)'}}>{sp.school}</span>
+              {!readOnly&&<button className="btn btn-danger btn-sm btn-icon" style={{padding:'0 .3rem',fontSize:'.7rem'}}
+                onClick={()=>upd('spellList',(sheet.spellList||[]).filter((_,j)=>j!==i))}>✕</button>}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="cs-section"><div className="cs-section-title">Equipment &amp; Inventory</div><TA label="Equipment" field="equipment" rows={5}/></div>
       <div className="cs-section">
@@ -2663,6 +3173,171 @@ function GlobalSetupListener({ onApply }) {
   )
 }
 
+// ── Spell Compendium ──────────────────────────────────────────────────────────
+const SPELL_SCHOOLS = ['Abjuration','Conjuration','Divination','Enchantment','Evocation','Illusion','Necromancy','Transmutation']
+
+function SpellCompendium({ campaignId, playerName }) {
+  const [spells,setSpells]=useState([])
+  const [loading,setLoading]=useState(false)
+  const [search,setSearch]=useState('')
+  const [filterLevel,setFilterLevel]=useState('')
+  const [filterSchool,setFilterSchool]=useState('')
+  const [filterClass,setFilterClass]=useState('')
+  const [nextUrl,setNextUrl]=useState(null)
+  const [detail,setDetail]=useState(null)
+  const [added,setAdded]=useState(false)
+  const [subTab,setSubTab]=useState('compendium') // 'compendium' | 'mine'
+  const [mySpells,setMySpells]=useState(()=>Storage.getSheet(campaignId,playerName)?.spellList||[])
+
+  const searchRef=useRef('')
+
+  function buildUrl(reset=true) {
+    const params=new URLSearchParams()
+    params.set('limit','50')
+    if(filterLevel!=='') params.set('level',filterLevel)
+    if(filterSchool) params.set('school',filterSchool.toLowerCase())
+    if(search.trim()) params.set('search',search.trim())
+    return `https://api.open5e.com/v2/spells/?${params}`
+  }
+
+  async function fetchSpells(url, append=false) {
+    setLoading(true)
+    try {
+      const r=await fetch(url)
+      const d=await r.json()
+      setSpells(prev=>append?[...prev,...(d.results||[])]:(d.results||[]))
+      setNextUrl(d.next||null)
+    } catch(e) {
+      console.error('spell fetch',e)
+    } finally { setLoading(false) }
+  }
+
+  useEffect(()=>{
+    fetchSpells(buildUrl())
+  },[search,filterLevel,filterSchool])
+
+  function addSpell(sp) {
+    const entry={name:sp.name,level:sp.spell_level,school:sp.school?.name||sp.school||'',prepared:false}
+    const sheet=Storage.getSheet(campaignId,playerName)
+    const list=sheet.spellList||[]
+    if(list.find(s=>s.name===sp.name)) return
+    const updated={...sheet,spellList:[...list,entry]}
+    Storage.saveSheet(campaignId,playerName,updated)
+    setMySpells(updated.spellList)
+    setAdded(sp.name)
+    setTimeout(()=>setAdded(false),2000)
+  }
+
+  function removeMySpell(name) {
+    const sheet=Storage.getSheet(campaignId,playerName)
+    const updated={...sheet,spellList:(sheet.spellList||[]).filter(s=>s.name!==name)}
+    Storage.saveSheet(campaignId,playerName,updated)
+    setMySpells(updated.spellList)
+  }
+
+  const inMySpells = (name) => mySpells.some(s=>s.name===name)
+
+  const SCHOOLS_DISPLAY = {abjuration:'Abjuration',conjuration:'Conjuration',divination:'Divination',enchantment:'Enchantment',evocation:'Evocation',illusion:'Illusion',necromancy:'Necromancy',transmutation:'Transmutation'}
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',height:'100%',overflow:'hidden'}}>
+      {/* Sub-tabs */}
+      <div className="flex gap-2" style={{padding:'.75rem 1rem .5rem',borderBottom:'1px solid rgba(201,168,76,.12)'}}>
+        <button className={`tab-btn${subTab==='compendium'?' active':''}`} onClick={()=>setSubTab('compendium')}>📖 Compendium</button>
+        <button className={`tab-btn${subTab==='mine'?' active':''}`} onClick={()=>{setSubTab('mine');setMySpells(Storage.getSheet(campaignId,playerName)?.spellList||[])}}>
+          ✨ My Spells {mySpells.length>0&&<span style={{marginLeft:'.3rem',background:'rgba(201,168,76,.2)',color:'var(--gold)',borderRadius:3,padding:'0 .3rem',fontSize:'.7rem'}}>{mySpells.length}</span>}
+        </button>
+      </div>
+
+      {subTab==='mine'&&(
+        <div style={{flex:1,overflow:'auto',padding:'1rem'}}>
+          {mySpells.length===0&&<div style={{color:'rgba(244,232,193,.35)',fontStyle:'italic',fontSize:'.85rem'}}>No spells added yet. Browse the Compendium to add spells.</div>}
+          {[0,1,2,3,4,5,6,7,8,9].map(lvl=>{
+            const group=mySpells.filter(s=>s.level===lvl)
+            if(!group.length) return null
+            return <div key={lvl} style={{marginBottom:'1rem'}}>
+              <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',color:'var(--gold-dark)',letterSpacing:'.08em',marginBottom:'.4rem',textTransform:'uppercase'}}>{lvl===0?'Cantrips':`Level ${lvl} Spells`}</div>
+              {group.map(sp=>(
+                <div key={sp.name} className="flex items-center gap-2" style={{background:'rgba(0,0,0,.2)',borderRadius:5,padding:'.45rem .6rem',marginBottom:'.25rem',border:'1px solid rgba(201,168,76,.1)'}}>
+                  <span style={{flex:1,fontSize:'.85rem'}}>{sp.name}</span>
+                  <span style={{fontSize:'.7rem',color:'rgba(244,232,193,.4)'}}>{sp.school}</span>
+                  <button className="btn btn-danger btn-sm btn-icon" style={{padding:'0 .3rem',fontSize:'.7rem'}} onClick={()=>removeMySpell(sp.name)}>✕</button>
+                </div>
+              ))}
+            </div>
+          })}
+        </div>
+      )}
+
+      {subTab==='compendium'&&<>
+        {/* Filters */}
+        <div className="flex gap-2" style={{padding:'.6rem 1rem',flexWrap:'wrap',borderBottom:'1px solid rgba(201,168,76,.08)'}}>
+          <input className="form-input" placeholder="Search spells…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:2,minWidth:140}}/>
+          <select className="form-input" value={filterLevel} onChange={e=>setFilterLevel(e.target.value)} style={{flex:1,minWidth:100}}>
+            <option value="">All Levels</option>
+            <option value="0">Cantrip</option>
+            {[1,2,3,4,5,6,7,8,9].map(l=><option key={l} value={l}>Level {l}</option>)}
+          </select>
+          <select className="form-input" value={filterSchool} onChange={e=>setFilterSchool(e.target.value)} style={{flex:1,minWidth:120}}>
+            <option value="">All Schools</option>
+            {SPELL_SCHOOLS.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        {/* Spell list */}
+        <div style={{flex:1,overflow:'auto',padding:'.5rem 1rem'}}>
+          {loading&&!spells.length&&<div style={{color:'rgba(244,232,193,.4)',padding:'2rem',textAlign:'center'}}>Loading spells…</div>}
+          {spells.map(sp=>{
+            const lvl=sp.spell_level; const school=SCHOOLS_DISPLAY[sp.school?.toLowerCase()]||sp.school||''
+            const already=inMySpells(sp.name)
+            return (
+              <div key={sp.slug||sp.name} className="spell-row-item" onClick={()=>setDetail(sp)}>
+                <div className="flex items-center gap-2">
+                  <span style={{fontSize:'.68rem',background:'rgba(201,168,76,.13)',color:'var(--gold-dark)',padding:'.1rem .35rem',borderRadius:3,fontFamily:'Cinzel,serif',minWidth:18,textAlign:'center'}}>{lvl===0?'C':lvl}</span>
+                  <span style={{fontSize:'.85rem',fontWeight:500}}>{sp.name}</span>
+                  <span style={{fontSize:'.72rem',color:'rgba(244,232,193,.38)',marginLeft:'auto'}}>{school}</span>
+                  <button className={`btn btn-sm ${already?'btn-ghost':'btn-primary'}`} style={{padding:'.15rem .5rem',fontSize:'.72rem',flexShrink:0}}
+                    onClick={e=>{e.stopPropagation();!already&&addSpell(sp)}}>
+                    {already?'✓ Added':added===sp.name?'✓':'+ Add'}
+                  </button>
+                </div>
+                <div style={{fontSize:'.73rem',color:'rgba(244,232,193,.38)',marginTop:'.15rem',paddingLeft:'1.5rem'}}>{sp.casting_time} · {sp.range} · {sp.duration}</div>
+              </div>
+            )
+          })}
+          {nextUrl&&<button className="btn btn-ghost btn-sm" style={{margin:'1rem auto',display:'block'}} onClick={()=>fetchSpells(nextUrl,true)} disabled={loading}>{loading?'Loading…':'Load More'}</button>}
+        </div>
+      </>}
+
+      {/* Spell Detail Modal */}
+      {detail&&(
+        <div className="modal-overlay" onClick={()=>setDetail(null)}>
+          <div style={{width:'100%',maxWidth:580,background:'var(--bg-card)',border:'1px solid rgba(201,168,76,.3)',borderRadius:8,padding:'1.5rem',maxHeight:'85vh',overflow:'auto',animation:'slideUp .2s ease'}} onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between" style={{marginBottom:'.75rem'}}>
+              <h3 style={{margin:0,color:'var(--gold)',fontFamily:'Cinzel,serif'}}>{detail.name}</h3>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setDetail(null)}>✕</button>
+            </div>
+            <div style={{fontSize:'.78rem',color:'var(--gold-dark)',marginBottom:'1rem',fontStyle:'italic'}}>
+              {detail.spell_level===0?'Cantrip':`${detail.spell_level}${['','st','nd','rd'][detail.spell_level]||'th'}-level`} {SCHOOLS_DISPLAY[detail.school?.toLowerCase()]||detail.school}
+              {detail.ritual&&' (ritual)'}{detail.concentration&&' (concentration)'}
+            </div>
+            {[['Casting Time',detail.casting_time],['Range',detail.range],['Components',detail.components],['Duration',detail.duration],['Classes',detail.dnd_class]].map(([k,v])=>v&&(
+              <div key={k} style={{marginBottom:'.3rem',fontSize:'.83rem'}}><strong style={{color:'var(--gold-dark)'}}>{k}: </strong>{v}</div>
+            ))}
+            <div style={{marginTop:'1rem',lineHeight:1.7,fontSize:'.85rem',color:'rgba(244,232,193,.85)',borderTop:'1px solid rgba(201,168,76,.12)',paddingTop:'1rem'}}
+              dangerouslySetInnerHTML={{__html:(detail.desc||'').replace(/\n/g,'<br/>')}}/>
+            {detail.higher_level&&<div style={{marginTop:'.75rem',fontSize:'.82rem',color:'rgba(244,232,193,.6)',fontStyle:'italic',borderTop:'1px solid rgba(201,168,76,.08)',paddingTop:'.75rem'}}><strong style={{color:'var(--gold-dark)'}}>At Higher Levels: </strong>{detail.higher_level}</div>}
+            <button className={`btn ${inMySpells(detail.name)?'btn-ghost':'btn-primary'} btn-sm`} style={{marginTop:'1.25rem'}}
+              onClick={()=>{if(!inMySpells(detail.name)){addSpell(detail);setDetail(null)}}}>
+              {inMySpells(detail.name)?'✓ Already in My Spells':'+ Add to My Spells'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Player View
 function PlayerView({ player, onLogout }) {
   const [tab,setTab]=useState('world')
@@ -2699,8 +3374,10 @@ function PlayerView({ player, onLogout }) {
         <div className="tab-bar">
           <button className={`tab-btn${tab==='world'?' active':''}`} onClick={()=>setTab('world')}>📜 World Lore</button>
           <button className={`tab-btn${tab==='character'?' active':''}`} onClick={()=>setTab('character')}>🧝 Character Sheet</button>
+          <button className={`tab-btn${tab==='spells'?' active':''}`} onClick={()=>setTab('spells')}>✨ Spells</button>
         </div>
-        <div className="tab-content" style={{overflow:'auto'}}>
+        <div className="tab-content" style={{overflow: tab==='spells'?'hidden':'auto'}}>
+          {tab==='spells'&&<SpellCompendium campaignId={player.campaignId} playerName={player.name}/>}
           {tab==='world'&&(
             <div className="player-layout">
               <div className="player-sidebar">
