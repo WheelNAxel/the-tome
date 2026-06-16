@@ -262,6 +262,10 @@ h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
 .roll-log-entry.dm-hidden{opacity:.55;background:repeating-linear-gradient(45deg,rgba(0,0,0,.15) 0,rgba(0,0,0,.15) 4px,transparent 4px,transparent 8px)}
 .roll-result-big{font-family:'Cinzel',serif;font-size:2.5rem;color:var(--gold);font-weight:700;text-align:center;margin:.5rem 0;text-shadow:0 0 20px rgba(201,168,76,.4)}
 .roll-result-breakdown{font-size:.82rem;color:rgba(244,232,193,.65);text-align:center;margin-bottom:.5rem}
+.dice-add-row{display:flex;flex-wrap:wrap;gap:.4rem}
+.dice-add-btn{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.4rem .55rem;min-width:44px;min-height:56px;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.25);border-radius:5px;cursor:pointer;transition:border-color .15s;color:inherit}
+.dice-add-btn:hover,.dice-add-btn:active{border-color:var(--gold)}
+.dice-roll-controls{display:flex;align-items:center;gap:.75rem;margin-top:auto;padding-top:.5rem;flex-wrap:wrap}
 /* ── Ornate Gold Frame System ────────────────────────────────────────────── */
 
 /* Notched octagonal corners — wrapping element only, apply to card outers */
@@ -646,43 +650,75 @@ h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
   .doc-viewer-inner{padding:1.5rem 1.25rem}
   .doc-viewer-overlay{padding:.75rem}
 
-  /* Buttons */
-  .btn-lg{padding:.6rem 1.2rem;font-size:.85rem}
+  /* Touch targets — everything tappable needs ≥44px */
+  .btn{min-height:44px}
+  .btn-sm{min-height:38px}
+  .btn-lg{padding:.6rem 1.2rem;font-size:.85rem;min-height:48px}
+  .die-btn{width:38px!important;height:38px!important;font-size:1.1rem!important;border-radius:5px!important}
+  .die-widget{min-width:80px;padding:.5rem .6rem}
+  .dice-add-btn{min-height:60px;padding:.5rem .65rem}
+  input[type=checkbox]{width:22px!important;height:22px!important}
 
   /* Stat block */
   .attr-row{gap:.3rem}
   .attr-box{padding:.3rem}
 
-  /* Encounter combatant row */
-  .combatant-stats{flex-wrap:wrap;gap:.4rem}
+  /* Encounter combatant row — wrap + bigger targets */
+  .combatant-stats{flex-wrap:wrap;gap:.5rem}
+  .encounter-main .btn-sm{min-height:42px;padding:.4rem .65rem;font-size:.75rem}
+  .encounter-sidebar{max-height:320px}
+  .encounter-sidebar .btn{min-height:44px;font-size:.75rem;padding:.4rem .65rem}
+  .encounter-sidebar .flex.gap-2{flex-wrap:wrap}
+  .encounter-main input[type=number]{height:44px;font-size:1rem;width:64px}
 
-  /* Dice roller: stack vertically in portrait */
-  .dice-roller-layout{flex-direction:column}
-  .dice-log-panel{width:100%;border-left:none;border-top:1px solid rgba(201,168,76,.2);max-height:260px}
-  .dice-tray{overflow-y:auto;padding:.75rem}
+  /* Dice roller portrait layout */
+  .dice-roller-layout{flex-direction:column;overflow-y:auto}
+  .dice-log-panel{width:100%!important;border-left:none;border-top:1px solid rgba(201,168,76,.2);min-height:200px;max-height:40vh}
+  .dice-tray{padding:.75rem;overflow-y:visible}
   .dice-3d-area{min-height:90px;padding:.75rem}
   .die-face svg,.die-face{width:48px;height:48px}
-  .die-widget{min-width:72px;padding:.4rem .5rem}
   .roll-result-big{font-size:1.8rem}
+  .dice-roll-controls{flex-wrap:wrap;gap:.5rem}
+  .dice-roll-controls label{width:100%}
+  .dice-roll-controls .btn{min-height:52px;font-size:1rem}
+  .dice-add-row{gap:.3rem}
 
-  /* Players grid: single column, stack buttons */
+  /* Players grid: single column */
   .players-grid{grid-template-columns:1fr!important}
   .player-card .flex.gap-2{flex-direction:column}
-  .player-card .flex.gap-2 .btn{width:100%}
+  .player-card .flex.gap-2 .btn{width:100%;min-height:44px}
 
-  /* Topbar: hide secondary text, shrink actions */
-  .topbar-actions .btn-ghost{font-size:.6rem;padding:.3rem .5rem}
+  /* Topbar actions */
+  .topbar-actions .btn-ghost{font-size:.6rem;padding:.3rem .5rem;min-height:38px}
 
-  /* Encounter sidebar controls: wrap buttons */
-  .encounter-sidebar .flex.gap-2{flex-wrap:wrap}
-  .encounter-sidebar .btn{font-size:.7rem;padding:.35rem .55rem}
-
-  /* Campaign header: tighter */
+  /* Campaign header */
   .campaign-header{gap:.35rem}
   .campaign-header h2{font-size:.82rem}
 
-  /* Tab btn: even smaller on narrow screens */
-  .tab-btn{font-size:.62rem;padding:.5rem .55rem;letter-spacing:.02em}
+  /* Tab btn */
+  .tab-btn{font-size:.62rem;padding:.55rem .6rem;letter-spacing:.02em;min-height:40px}
+
+  /* Character sheet: prevent zoom, larger tap areas */
+  input,select,textarea{font-size:16px!important}
+  .cs-section-title{font-size:.75rem}
+  .cs-stat-box{min-height:64px}
+
+  /* Setup cards: full width on phone */
+  .cs-setup-card{min-width:unset;width:100%;max-width:100%}
+  .cs-setup-cards{flex-direction:column;align-items:stretch}
+
+  /* Wizard step nav buttons */
+  .wizard-nav{flex-wrap:wrap;gap:.5rem}
+  .wizard-nav .btn{min-height:48px;flex:1;min-width:120px}
+
+  /* Doc viewer */
+  .doc-viewer-inner{padding:1.5rem 1.25rem}
+  .doc-viewer-overlay{padding:.75rem}
+
+  /* Modals */
+  .modal-body.flex{flex-direction:column}
+  .bestiary-list{width:100%;max-height:200px}
+  .bestiary-detail{flex:1;overflow-y:auto}
 }
 
 /* Safe area insets for notched phones */
@@ -3324,216 +3360,155 @@ function DiceRollerTab({ campaignId, rollerName, isDM }) {
   const dLogKey = `tome_dicelog_${campaignId}`
   function loadLog(){try{const s=localStorage.getItem(dLogKey);if(s)return JSON.parse(s)}catch(e){}return[]}
 
-  const [diceSet, setDiceSet] = useState([{sides:20,count:1}])
-  const [rolling, setRolling] = useState(false)
-  const [currentRoll, setCurrentRoll] = useState(null)
-  const [hidden, setHidden] = useState(false)
-  const [showLog, setShowLog] = useState(false)
-  const [log, setLog] = useState(loadLog)
-  const [doneCount, setDoneCount] = useState(0)
+  const [diceSet,setDiceSet]=useState([{sides:20,count:1}])
+  const [rolling,setRolling]=useState(false)
+  const [currentRoll,setCurrentRoll]=useState(null)
+  const [hidden,setHidden]=useState(false)
+  const [log,setLog]=useState(loadLog)
+  const [doneCount,setDoneCount]=useState(0)
+  const prevLogLen=useRef(0)
+  const [newFlash,setNewFlash]=useState(false)
+  const logEndRef=useRef()
 
-  // Persist log to localStorage whenever it changes
   useEffect(()=>{
     try{localStorage.setItem(dLogKey,JSON.stringify(log.slice(-200)))}catch(e){}
+    if(log.length>prevLogLen.current&&prevLogLen.current>0){setNewFlash(true);setTimeout(()=>setNewFlash(false),1000)}
+    prevLogLen.current=log.length
+    if(logEndRef.current)logEndRef.current.scrollIntoView({behavior:'smooth'})
   },[log])
 
-  // Poll roll log from server (overwrites local cache with authoritative server state)
   useEffect(()=>{
-    if(!IS_SERVER) return
-    function fetchLog(){
-      api('GET',`dice/${campaignId}`).then(r=>{ if(r.ok) setLog(r.rolls||[]) }).catch(()=>{})
-    }
+    if(!IS_SERVER)return
+    function fetchLog(){api('GET',`dice/${campaignId}`).then(r=>{if(r.ok)setLog(r.rolls||[])}).catch(()=>{})}
     fetchLog()
     const t=setInterval(fetchLog,1500)
     return ()=>clearInterval(t)
   },[campaignId])
 
-  function addDie(sides){
-    setDiceSet(ds=>{
-      const ex=ds.find(d=>d.sides===sides)
-      if(ex) return ds.map(d=>d.sides===sides?{...d,count:Math.min(d.count+1,20)}:d)
-      return [...ds,{sides,count:1}]
-    })
-  }
-  function removeDie(sides){
-    setDiceSet(ds=>{
-      const ex=ds.find(d=>d.sides===sides)
-      if(!ex) return ds
-      if(ex.count===1) return ds.filter(d=>d.sides!==sides)
-      return ds.map(d=>d.sides===sides?{...d,count:d.count-1}:d)
-    })
-  }
-  function setCount(sides,n){
-    const v=Math.max(0,Math.min(20,parseInt(n)||0))
-    if(v===0) setDiceSet(ds=>ds.filter(d=>d.sides!==sides))
-    else setDiceSet(ds=>ds.map(d=>d.sides===sides?{...d,count:v}:d))
-  }
+  function addDie(sides){setDiceSet(ds=>{const ex=ds.find(d=>d.sides===sides);if(ex)return ds.map(d=>d.sides===sides?{...d,count:Math.min(d.count+1,20)}:d);return[...ds,{sides,count:1}]})}
+  function removeDie(sides){setDiceSet(ds=>{const ex=ds.find(d=>d.sides===sides);if(!ex)return ds;if(ex.count===1)return ds.filter(d=>d.sides!==sides);return ds.map(d=>d.sides===sides?{...d,count:d.count-1}:d)})}
 
   function rollAll(){
-    if(rolling||diceSet.length===0||diceSet.every(d=>d.count===0)) return
-    const dice = diceSet.filter(d=>d.count>0).map(d=>({
-      sides: d.sides,
-      results: Array.from({length:d.count},()=>Math.floor(Math.random()*d.sides)+1)
-    }))
-    const isD20Multi = dice.length===1 && dice[0].sides===20 && dice[0].results.length>1
-    const total = isD20Multi ? null : dice.reduce((s,d)=>s+d.results.reduce((a,b)=>a+b,0),0)
-    const roll = {dice, total, isD20Multi, hidden: isDM && hidden}
-    setCurrentRoll(roll)
-    setDoneCount(0)
-    setRolling(true)
-    // Push to server immediately so other players see it right away
-    const entry = {roller:rollerName,isDM,hidden:isDM&&hidden,dice,total,isD20Multi,ts:Date.now()/1000}
+    if(rolling||diceSet.every(d=>d.count===0))return
+    const dice=diceSet.filter(d=>d.count>0).map(d=>({sides:d.sides,results:Array.from({length:d.count},()=>Math.floor(Math.random()*d.sides)+1)}))
+    const isD20Multi=dice.length===1&&dice[0].sides===20&&dice[0].results.length>1
+    const total=isD20Multi?null:dice.reduce((s,d)=>s+d.results.reduce((a,b)=>a+b,0),0)
+    setCurrentRoll({dice,total,isD20Multi,hidden:isDM&&hidden})
+    setDoneCount(0);setRolling(true)
+    const entry={roller:rollerName,isDM,hidden:isDM&&hidden,dice,total,isD20Multi,ts:Date.now()/1000}
+    setLog(l=>[...l,entry])
     if(IS_SERVER){
-      api('POST',`dice/${campaignId}`,entry).then(r=>{
-        if(r.ok) api('GET',`dice/${campaignId}`).then(r2=>{ if(r2.ok) setLog(r2.rolls||[]) }).catch(()=>{})
-      }).catch(()=>{})
-    } else {
-      setLog(l=>[...l,entry])
+      api('POST',`dice/${campaignId}`,entry).catch(()=>{})
     }
   }
 
-  const totalDice = diceSet.reduce((s,d)=>s+d.count,0)
-
-  useEffect(()=>{
-    if(!rolling||!currentRoll) return
-    if(doneCount < totalDice) return
-    setRolling(false)
-  },[doneCount, rolling, currentRoll, totalDice])
+  const totalDice=diceSet.reduce((s,d)=>s+d.count,0)
+  useEffect(()=>{if(!rolling||!currentRoll||doneCount<totalDice)return;setRolling(false)},[doneCount,rolling,currentRoll,totalDice])
 
   function revealRoll(idx){
     setLog(l=>l.map((r,i)=>i===idx?{...r,hidden:false}:r))
-    if(IS_SERVER){
-      // patch not supported — just mark locally; server will still show hidden until page reload
-    }
+    if(IS_SERVER)api('POST',`dice/${campaignId}/reveal`,{idx}).catch(()=>{})
   }
 
-  const allDiceFlat = currentRoll ? currentRoll.dice.flatMap(d=>d.results.map(r=>({sides:d.sides,result:r}))) : []
+  const allDiceFlat=currentRoll?currentRoll.dice.flatMap(d=>d.results.map(r=>({sides:d.sides,result:r}))):[]
 
-  return (
+  function LogEntry({r,idx}){
+    if(r.hidden&&!isDM)return null
+    const isMyHidden=r.hidden&&isDM&&r.roller===rollerName
+    return(
+      <div className={`roll-log-entry${r.hidden?' dm-hidden':''}`}>
+        <div className="flex items-center justify-between">
+          <div className="roller-name">{r.roller}{r.isDM?' (DM)':''}</div>
+          <div className="flex items-center gap-2">
+            {isMyHidden&&<button className="btn btn-ghost btn-sm" style={{fontSize:'.6rem',padding:'.2rem .4rem'}} onClick={()=>revealRoll(idx)}>👁 Reveal</button>}
+            {r.hidden&&<span style={{fontSize:'.6rem',color:'rgba(201,168,76,.45)'}}>🔒</span>}
+            <span style={{fontSize:'.6rem',color:'rgba(244,232,193,.3)'}}>{new Date(r.ts*1000).toLocaleTimeString()}</span>
+          </div>
+        </div>
+        <div className="roll-detail">{r.dice.map(d=>`${d.results.length}d${d.sides}[${d.results.join(',')}]`).join(' + ')}</div>
+        {r.isD20Multi
+          ?<div className="flex gap-2" style={{flexWrap:'wrap',marginTop:'.2rem'}}>
+              {r.dice[0]?.results.map((v,j)=><span key={j} style={{fontFamily:'Cinzel,serif',fontSize:'1rem',color:v===20?'#FFD700':v===1?'#E87070':'var(--gold)',fontWeight:700}}>{v}{v===20?' ✨':v===1?' \u{1F480}':''}</span>)}
+            </div>
+          :<div className="flex items-center gap-2"><span className="roll-total">{r.total}</span><span style={{fontSize:'.7rem',color:'rgba(244,232,193,.4)'}}>total</span></div>
+        }
+      </div>
+    )
+  }
+
+  return(
     <div className="dice-roller-layout">
-      {/* Left: Tray */}
       <div className="dice-tray">
-        <div style={{marginBottom:'1rem'}}>
-          <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.6rem'}}>Add Dice</div>
-          <div className="flex gap-2" style={{flexWrap:'wrap'}}>
+        <div style={{marginBottom:'.75rem'}}>
+          <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Add Dice</div>
+          <div className="dice-add-row">
             {DICE_SIDES.map(s=>(
-              <button key={s} onClick={()=>addDie(s)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:.2,padding:'.35rem .6rem',background:'rgba(0,0,0,.3)',border:'1px solid rgba(201,168,76,.25)',borderRadius:5,cursor:'pointer',transition:'border-color .15s'}}
-                onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
-                onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(201,168,76,.25)'}>
-                <DieSVG sides={s} size={32}/>
-                <span style={{fontFamily:'Cinzel,serif',fontSize:'.65rem',color:'var(--gold-dark)'}}>d{s}</span>
+              <button key={s} className="dice-add-btn" onClick={()=>addDie(s)}>
+                <DieSVG sides={s} size={28}/>
+                <span style={{fontFamily:'Cinzel,serif',fontSize:'.6rem',color:'var(--gold-dark)'}}>d{s}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Active dice widgets */}
-        {diceSet.filter(d=>d.count>0).length>0&&<div style={{marginBottom:'1rem'}}>
-          <div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Your Roll</div>
+        {diceSet.some(d=>d.count>0)&&<div style={{marginBottom:'.75rem'}}>
+          <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.4rem'}}>Rolling</div>
           <div className="dice-row">
             {diceSet.filter(d=>d.count>0).map(d=>(
               <div key={d.sides} className="die-widget">
                 <div className="die-label">d{d.sides}</div>
                 <div className="die-count-row">
-                  <button className="die-btn" onClick={()=>removeDie(d.sides)}>−</button>
+                  <button className="die-btn" onClick={()=>removeDie(d.sides)}>-</button>
                   <span className="die-count">{d.count}</span>
                   <button className="die-btn" onClick={()=>addDie(d.sides)}>+</button>
                 </div>
-                <div style={{fontSize:'.6rem',color:'rgba(244,232,193,.4)'}}>×d{d.sides}</div>
               </div>
             ))}
-            <button onClick={()=>setDiceSet([])} style={{alignSelf:'flex-start',background:'none',border:'none',color:'rgba(232,112,112,.5)',cursor:'pointer',fontSize:'.7rem',marginTop:'.3rem'}}>Clear</button>
+            <button onClick={()=>setDiceSet([])} className="btn btn-ghost btn-sm" style={{alignSelf:'center',fontSize:'.72rem'}}>Clear</button>
           </div>
         </div>}
 
-        {/* 3D animation area */}
         <div className="dice-3d-area">
-          {allDiceFlat.length===0&&!rolling&&<div style={{color:'rgba(244,232,193,.25)',fontFamily:'IM Fell English,serif',fontStyle:'italic',fontSize:'.9rem'}}>Add dice above, then roll…</div>}
-          {allDiceFlat.map((d,i)=>(
-            <AnimatedDie key={`${i}-${rolling}`} sides={d.sides} result={d.result} rolling={rolling}
-              onDone={()=>setDoneCount(c=>c+1)}/>
-          ))}
+          {!allDiceFlat.length&&!rolling&&<div style={{color:'rgba(244,232,193,.25)',fontFamily:'IM Fell English,serif',fontStyle:'italic',fontSize:'.9rem'}}>Pick dice above, then roll...</div>}
+          {allDiceFlat.map((d,i)=><AnimatedDie key={`${i}-${rolling}`} sides={d.sides} result={d.result} rolling={rolling} onDone={()=>setDoneCount(c=>c+1)}/>)}
         </div>
 
-        {/* Result display */}
         {currentRoll&&!rolling&&(
-          <div style={{textAlign:'center',marginBottom:'.75rem'}}>
+          <div style={{textAlign:'center',marginBottom:'.5rem'}}>
             {currentRoll.isD20Multi
-              ? <div>
-                  <div style={{fontFamily:'Cinzel,serif',fontSize:'.75rem',color:'var(--gold-dark)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'.25rem'}}>Results</div>
-                  <div className="flex gap-2 justify-center" style={{flexWrap:'wrap'}}>
-                    {currentRoll.dice[0].results.map((r,i)=>(
-                      <span key={i} style={{fontFamily:'Cinzel,serif',fontSize:'2rem',color:r===20?'#FFD700':r===1?'#E87070':'var(--gold)',fontWeight:700,textShadow:r===20?'0 0 16px #FFD700':r===1?'0 0 10px #E87070':'none'}}>{r}{r===20?' ✨':r===1?' 💀':''}</span>
-                    ))}
-                  </div>
+              ?<div className="flex gap-3 justify-center" style={{flexWrap:'wrap'}}>
+                  {currentRoll.dice[0].results.map((r,i)=><span key={i} style={{fontFamily:'Cinzel,serif',fontSize:'2rem',color:r===20?'#FFD700':r===1?'#E87070':'var(--gold)',fontWeight:700}}>{r}</span>)}
                 </div>
-              : <>
-                  <div style={{fontFamily:'Cinzel,serif',fontSize:'.75rem',color:'var(--gold-dark)',letterSpacing:'.08em',textTransform:'uppercase'}}>Total</div>
-                  <div className="roll-result-big">{currentRoll.total}</div>
-                  <div className="roll-result-breakdown">
-                    {currentRoll.dice.map(d=>`${d.results.length}d${d.sides} [${d.results.join(', ')}]`).join(' + ')}
-                  </div>
-                </>
+              :<><div style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',color:'var(--gold-dark)',textTransform:'uppercase',letterSpacing:'.08em'}}>Total</div>
+                <div className="roll-result-big">{currentRoll.total}</div>
+                <div className="roll-result-breakdown">{currentRoll.dice.map(d=>`${d.results.length}d${d.sides}[${d.results.join(',')}]`).join(' + ')}</div>
+              </>
             }
           </div>
         )}
 
-        {/* Roll button */}
-        <div className="flex gap-3 items-center" style={{marginTop:'auto',paddingTop:'.5rem'}}>
-          {isDM&&<label className="flex items-center gap-2" style={{fontSize:'.8rem',color:'rgba(244,232,193,.6)',cursor:'pointer'}}>
-            <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)} style={{accentColor:'var(--gold)'}}/>
+        <div className="dice-roll-controls">
+          {isDM&&<label style={{display:'flex',alignItems:'center',gap:8,fontSize:'.8rem',color:'rgba(244,232,193,.6)',cursor:'pointer'}}>
+            <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)} style={{accentColor:'var(--gold)',width:18,height:18}}/>
             Hide from players
           </label>}
-          <button className="btn btn-primary" style={{flex:1,fontSize:'1rem',padding:'.65rem',fontFamily:'Cinzel,serif',letterSpacing:'.08em'}}
+          <button className="btn btn-primary" style={{flex:1,fontSize:'.95rem',padding:'.7rem',fontFamily:'Cinzel,serif',letterSpacing:'.06em',minHeight:48}}
             onClick={rollAll} disabled={rolling||diceSet.every(d=>d.count===0)}>
-            {rolling ? '🎲 Rolling…' : '🎲 Roll!'}
-          </button>
-          <button className="btn btn-ghost btn-sm" onClick={()=>setShowLog(l=>!l)} style={{whiteSpace:'nowrap'}}>
-            📜 {showLog?'Hide Log':'Roll Log'}
+            {rolling?'Rolling...':'Roll!'}
           </button>
         </div>
       </div>
 
-      {/* Right: Log panel */}
-      {showLog&&<div className="dice-log-panel">
-        <div style={{padding:'.75rem 1rem',borderBottom:'1px solid rgba(201,168,76,.2)',fontFamily:'Cinzel,serif',fontSize:'.72rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+      <div className="dice-log-panel" style={{outline:newFlash?'2px solid var(--gold)':'2px solid transparent',transition:'outline .4s'}}>
+        <div style={{padding:'.6rem 1rem',borderBottom:'1px solid rgba(201,168,76,.2)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',flexShrink:0}}>
           Roll Log
-          <button className="btn btn-ghost btn-sm" style={{fontSize:'.65rem'}} onClick={()=>setShowLog(false)}>✕</button>
         </div>
         <div style={{flex:1,overflowY:'auto'}}>
-          {log.length===0&&<div style={{padding:'1rem',color:'rgba(244,232,193,.35)',fontStyle:'italic',fontSize:'.82rem',fontFamily:'IM Fell English,serif'}}>No rolls yet this session.</div>}
-          {[...log].reverse().map((r,i)=>{
-            const isHiddenDM = r.hidden && !isDM
-            const isMyHiddenRoll = r.hidden && isDM && r.roller===rollerName
-            if(isHiddenDM) return null
-            return (
-              <div key={i} className={`roll-log-entry${r.hidden?' dm-hidden':''}`}>
-                <div className="flex items-center justify-between">
-                  <div className="roller-name">{r.roller}{r.isDM?' (DM)':''}</div>
-                  {r.hidden&&isMyHiddenRoll&&<button className="btn btn-ghost btn-sm" style={{fontSize:'.6rem',padding:'.1rem .3rem'}}
-                    onClick={()=>revealRoll(log.length-1-i)}>👁 Reveal</button>}
-                  {r.hidden&&<span style={{fontSize:'.6rem',color:'rgba(201,168,76,.45)'}}>🔒 Hidden</span>}
-                </div>
-                <div className="roll-detail">
-                  {r.dice.map(d=>`${d.results.length}d${d.sides}[${d.results.join(',')}]`).join(' + ')}
-                </div>
-                {r.isD20Multi
-                  ? <div className="flex gap-2" style={{flexWrap:'wrap',marginTop:'.2rem'}}>
-                      {r.dice[0]?.results.map((v,j)=>(
-                        <span key={j} style={{fontFamily:'Cinzel,serif',fontSize:'.95rem',color:v===20?'#FFD700':v===1?'#E87070':'var(--gold)',fontWeight:700}}>{v}{v===20?' ✨':v===1?' 💀':''}</span>
-                      ))}
-                    </div>
-                  : <div className="flex items-center gap-2">
-                      <span className="roll-total">{r.total}</span>
-                      <span style={{fontSize:'.7rem',color:'rgba(244,232,193,.4)'}}>total</span>
-                    </div>
-                }
-                <div style={{fontSize:'.62rem',color:'rgba(244,232,193,.3)',marginTop:'.1rem'}}>{new Date(r.ts*1000).toLocaleTimeString()}</div>
-              </div>
-            )
-          })}
+          {log.length===0&&<div style={{padding:'1rem',color:'rgba(244,232,193,.35)',fontStyle:'italic',fontSize:'.82rem',fontFamily:'IM Fell English,serif'}}>No rolls yet.</div>}
+          {log.map((r,i)=><LogEntry key={i} r={r} idx={i}/>)}
+          <div ref={logEndRef}/>
         </div>
-      </div>}
+      </div>
     </div>
   )
 }

@@ -340,16 +340,26 @@ class Handler(BaseHTTPRequestHandler):
                 return self.err('Player not found — join the campaign first', 404)
 
         if api.startswith('dice/'):
-            cid = api[5:]
+            parts = api[5:].split('/', 1)
+            cid = parts[0]
+            sub = parts[1] if len(parts) > 1 else None
             camp = d['campaigns'].get(cid)
             if camp is None:
                 return self.err('Campaign not found', 404)
-            roll = b  # {roller, isDM, hidden, dice, results, total, ts}
+            if sub == 'reveal':
+                idx = b.get('idx')
+                log = camp.get('diceLog', [])
+                if idx is not None and 0 <= idx < len(log):
+                    log[idx]['hidden'] = False
+                    camp['diceLog'] = log
+                    d['campaigns'][cid] = camp
+                    dump(d)
+                return self.ok({'ok': True})
+            roll = b
             roll['ts'] = roll.get('ts') or time.time()
             if 'diceLog' not in camp:
                 camp['diceLog'] = []
             camp['diceLog'].append(roll)
-            # Keep last 200 rolls
             camp['diceLog'] = camp['diceLog'][-200:]
             d['campaigns'][cid] = camp
             dump(d)
