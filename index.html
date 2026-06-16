@@ -3040,11 +3040,23 @@ function Bestiary({ onAdd, onClose }) {
 // Encounter Tracker
 let cid=1
 function EncounterTracker({ campaign }) {
-  const [combatants,setCombatants]=useState([]),[activeIdx,setActiveIdx]=useState(null)
-  const [round,setRound]=useState(1),[running,setRunning]=useState(false)
+  const eKey = `tome_encounter_${campaign.id}`
+  function loadEncounter() {
+    try { const s=localStorage.getItem(eKey); if(s) return JSON.parse(s) } catch(e){}
+    return null
+  }
+  const saved = loadEncounter()
+  const [combatants,setCombatants]=useState(saved?.combatants||[])
+  const [activeIdx,setActiveIdx]=useState(saved?.activeIdx??null)
+  const [round,setRound]=useState(saved?.round||1)
+  const [running,setRunning]=useState(saved?.running||false)
   const [showBestiary,setShowBestiary]=useState(false)
   const [addForm,setAddForm]=useState({name:'',initiative:'',hp:'',ac:'',type:'monster'})
   const [dmgInputs,setDmgInputs]=useState({})
+
+  useEffect(()=>{
+    try { localStorage.setItem(eKey,JSON.stringify({combatants,activeIdx,round,running})) } catch(e){}
+  },[combatants,activeIdx,round,running])
 
   const sorted=[...combatants].sort((a,b)=>b.initiative-a.initiative)
 
@@ -3067,7 +3079,7 @@ function EncounterTracker({ campaign }) {
     if(next===0&&activeIdx!==null)setRound(r=>r+1)
     setActiveIdx(next);setRunning(true)
   }
-  function reset(){if(!confirm('Reset encounter?'))return;setCombatants([]);setActiveIdx(null);setRound(1);setRunning(false)}
+  function reset(){if(!confirm('Reset encounter?'))return;setCombatants([]);setActiveIdx(null);setRound(1);setRunning(false);try{localStorage.removeItem(eKey)}catch(e){}}
   function updInit(id,v){setCombatants(prev=>prev.map(c=>c.id===id?{...c,initiative:Number(v)||0}:c))}
   function hpColor(pct){return pct>.6?'#4CAF50':pct>.25?'#FF9800':'#F44336'}
   const activeId=running&&activeIdx!==null?sorted[activeIdx]?.id:null
@@ -3281,16 +3293,23 @@ function AnimatedDie({ sides, result, rolling, onDone }) {
 }
 
 function DiceRollerTab({ campaignId, rollerName, isDM }) {
-  // dice config: array of {sides, count}
+  const dLogKey = `tome_dicelog_${campaignId}`
+  function loadLog(){try{const s=localStorage.getItem(dLogKey);if(s)return JSON.parse(s)}catch(e){}return[]}
+
   const [diceSet, setDiceSet] = useState([{sides:20,count:1}])
   const [rolling, setRolling] = useState(false)
-  const [currentRoll, setCurrentRoll] = useState(null) // {dice:[{sides,results:[]}], total, isD20Multi, hidden}
+  const [currentRoll, setCurrentRoll] = useState(null)
   const [hidden, setHidden] = useState(false)
   const [showLog, setShowLog] = useState(false)
-  const [log, setLog] = useState([])
+  const [log, setLog] = useState(loadLog)
   const [doneCount, setDoneCount] = useState(0)
 
-  // Poll roll log from server
+  // Persist log to localStorage whenever it changes
+  useEffect(()=>{
+    try{localStorage.setItem(dLogKey,JSON.stringify(log.slice(-200)))}catch(e){}
+  },[log])
+
+  // Poll roll log from server (overwrites local cache with authoritative server state)
   useEffect(()=>{
     if(!IS_SERVER) return
     function fetchLog(){
