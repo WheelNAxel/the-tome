@@ -80,7 +80,8 @@ h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
 .landing-card{background:linear-gradient(160deg,var(--wood-mid),var(--wood-light));border:none;border-radius:0;padding:2rem;width:340px;transition:transform .2s}
 .landing-card h2{margin-bottom:.5rem;font-size:1.2rem}
 .landing-card p{color:var(--parchment);opacity:.7;font-size:.88rem;margin-bottom:1.25rem;line-height:1.6}
-.tab-bar{display:flex;border-bottom:2px solid var(--gold-dark);background:linear-gradient(180deg,var(--wood-light) 0%,var(--wood) 100%);padding:0 1rem;gap:.25rem;flex-shrink:0;box-shadow:inset 0 -1px 0 rgba(201,168,76,.08)}
+.tab-bar{display:flex;border-bottom:2px solid var(--gold-dark);background:linear-gradient(180deg,var(--wood-light) 0%,var(--wood) 100%);padding:0 1rem;gap:.25rem;flex-shrink:0;box-shadow:inset 0 -1px 0 rgba(201,168,76,.08);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:.65rem 1.2rem;background:transparent;border:none;border-bottom:3px solid transparent;color:rgba(201,168,76,.45);cursor:pointer;transition:all .2s;margin-bottom:-2px}
 .tab-btn:hover{color:var(--gold);background:rgba(201,168,76,.04)}
 .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.06);text-shadow:0 0 12px rgba(201,168,76,.3)}
@@ -2799,7 +2800,7 @@ function PlayersTab({ campaign }) {
               <div className="cs-preview">{[s.race&&s.class?`${s.race} ${s.class}`:null,s.level?`Level ${s.level}`:null,s.background||null].filter(Boolean).join(' · ')||'Sheet not filled yet'}</div>
               <div className="mt-2 flex gap-2">
                 <button className="btn btn-ghost btn-sm" style={{flex:1}}>View Sheet →</button>
-                <button className="btn btn-danger btn-sm" onClick={e=>{e.stopPropagation();if(confirm(`Kick ${name} from the campaign?`))Storage.kickPlayer(campaign.id,name).then(()=>{Storage.getPlayersWithSheets(campaign.id).then(s=>setSheets(s||{}))})}} title="Kick player">✕</button>
+                <button className="btn btn-danger btn-sm" onClick={e=>{e.stopPropagation();if(confirm(`Remove ${name} from the campaign? They will need to rejoin to come back.`))Storage.kickPlayer(campaign.id,name).then(()=>{Storage.getPlayersWithSheets(campaign.id).then(s=>setSheets(s||{}))})}} title="Kick player">Kick</button>
               </div>
             </div>
           })}
