@@ -2569,10 +2569,11 @@ function PlayersTab({ campaign }) {
   const [viewing,setViewing]=useState(null)
   const [sheets,setSheets]=useState({})
   const players=Object.keys(campaign.players||{})
+  const playerKey=players.sort().join(',')
 
   useEffect(()=>{
     Storage.getPlayersWithSheets(campaign.id).then(s=>setSheets(s||{}))
-  },[campaign.id])
+  },[campaign.id, playerKey])
 
   if(viewing) return (
     <div style={{overflow:'auto',flex:1}}>
