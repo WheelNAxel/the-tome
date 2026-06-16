@@ -347,6 +347,20 @@ class Handler(BaseHTTPRequestHandler):
                 dump(d)
                 return self.ok({'ok': True})
             return self.err('Campaign not found', 404)
+        if api.startswith('player/'):
+            parts = api[7:].split('/', 1)
+            if len(parts) == 2:
+                cid, name = parts[0], urllib.parse.unquote(parts[1])
+                key = f'{cid}:{name}'
+                if key in d['players']:
+                    del d['players'][key]
+                camp = d['campaigns'].get(cid)
+                if camp and name in camp.get('players', {}):
+                    del camp['players'][name]
+                    d['campaigns'][cid] = camp
+                dump(d)
+                return self.ok({'ok': True})
+            return self.err('Player not found', 404)
         self.err('Unknown endpoint', 404)
 
 

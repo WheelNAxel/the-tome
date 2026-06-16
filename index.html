@@ -911,6 +911,17 @@ const Storage = {
     return load('tome_campaigns')[cid]?.players?.[name]?.characterSheet || emptySheet(name)
   },
 
+  kickPlayer: async (cid, name) => {
+    if (IS_SERVER) {
+      const r = await api('DELETE', `player/${cid}/${encodeURIComponent(name)}`)
+      if (!r.ok) return { error: r.error }
+    }
+    localStorage.removeItem(`tome_sheet_${cid}_${name}`)
+    const cs = load('tome_campaigns')
+    if (cs[cid]?.players?.[name]) { delete cs[cid].players[name]; save('tome_campaigns', cs) }
+    return { ok: true }
+  },
+
   getPlayersWithSheets: async (cid) => {
     if (IS_CLOUD) {
       const rows = await sbFetch('GET', 'players', null, `campaign_id=eq.${cid}&select=name,character_sheet`)
@@ -1009,7 +1020,25 @@ const BACKGROUND_DATA = {
   "Sailor":{skills:['athletics','perception'],feature:"Ship's Passage",equipment:"Belaying pin (club), 50ft silk rope, lucky charm, common clothes, 10gp"},
 }
 
-const ALIGNMENTS = {1:'Lawful Good',2:'Neutral Good',3:'Chaotic Good',4:'Lawful Neutral',5:'True Neutral',6:'Chaotic Neutral',7:'Lawful Evil',8:'Neutral Evil',9:'Chaotic Evil'}
+const ALIGNMENTS = ['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','True Neutral','Chaotic Neutral','Lawful Evil','Neutral Evil','Chaotic Evil']
+
+const POINT_BUY_COSTS = {8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9}
+const POINT_BUY_TOTAL = 27
+
+const BG_FLAVOR = {
+  Acolyte:{personality:["I idolize a hero of my faith and constantly cite their deeds.","I quote sacred texts in any situation.","I am tolerant of other faiths and respect their worshippers.","I've spent so long in the temple I have little practical knowledge of the outside world."],ideals:["Tradition. Sacred rites must be preserved.","Charity. I always help those who need it.","Power. I hope to rise to the top of my faith's hierarchy."],bonds:["I would die to recover an ancient relic of my faith.","I owe my life to the priest who took me in when my parents died."],flaws:["I judge others harshly and myself even more so.","I am inflexible in my thinking."]},
+  Criminal:{personality:["I always have a plan for getting out of trouble.","I lie about almost everything, even when there's no good reason to.","I am incredibly slow to trust — those who seem nicest often have the most to hide.","Once I commit to something, I see it through no matter what."],ideals:["Freedom. Chains are meant to be broken.","People. I'm loyal to my friends, not to any ideals.","Redemption. There's a spark of good in everyone."],bonds:["I'm trying to pay off an old debt I owe to a generous benefactor.","Someone I loved died because of a mistake I made. That will never happen again."],flaws:["When I see something valuable, I can't think about anything but how to steal it.","I turn tail and run when things look bad."]},
+  "Folk Hero":{personality:["I judge people by their actions, not their words.","If someone is in trouble, I'm always ready to lend help.","When I set my mind to something, I follow through no matter what.","I have a strong sense of fair play."],ideals:["Respect. People deserve to be treated with dignity, regardless of station.","Freedom. Tyrants must not be allowed to oppress the people.","Sincerity. There's no good in pretending to be something I'm not."],bonds:["I protect those who cannot protect themselves.","I fight for those who cannot fight for their own freedom."],flaws:["The tyrant who rules my land will stop at nothing to see me killed.","I'm convinced of the significance of my destiny and blind to my shortcomings."]},
+  Noble:{personality:["My eloquent flattery makes everyone I talk to feel like the most wonderful person in the world.","I take great pains to always look my best and follow the latest fashions.","I don't like to get my hands dirty, and I won't be caught dead in unsuitable accommodations.","Despite my noble birth, I do not place myself above other folk."],ideals:["Responsibility. It is my duty to respect the authority of those above me.","Noble Obligation. It is my duty to protect and care for the people beneath me.","Independence. I must prove I can handle myself without the coddling of my family."],bonds:["I will face any challenge to win the approval of my family.","My loyalty to my sovereign is unwavering."],flaws:["I secretly believe that everyone is beneath me.","I too often hear veiled insults and threats in every word addressed to me."]},
+  Sage:{personality:["I use polysyllabic words that convey the impression of great erudition.","I've read every book in the world's greatest libraries — or so I'd like to think.","I'm used to helping out those who aren't as smart as I am.","There's nothing I like more than a good mystery."],ideals:["Knowledge. The path to power and self-improvement is through knowledge.","Logic. Emotions must not cloud our logical thinking.","Self-Improvement. The goal of a life of study is the betterment of oneself."],bonds:["I have an ancient text that holds terrible secrets that must not fall into wrong hands.","I have been searching my whole life for the answer to a certain question."],flaws:["I am easily distracted by the promise of information.","I speak without really thinking through my words, invariably insulting others."]},
+  Soldier:{personality:["I'm always polite and respectful.","I'm haunted by memories of war. I wake in a cold sweat reliving those experiences.","I face problems head-on. A simple, direct solution is the best path to success.","I have a crude sense of humor."],ideals:["Greater Good. Our lot is to lay down our lives in defense of others.","Responsibility. I do what I must and obey just authority.","Live and Let Live. Meddling in the affairs of others only causes trouble."],bonds:["I would still lay down my life for the people I served with.","Someone saved my life on the battlefield. I'll never leave a friend behind."],flaws:["The monstrous enemy we faced still leaves me quivering with fear.","I made a terrible mistake in battle that cost many lives — and I'll do anything to keep that secret."]},
+  Outlander:{personality:["I'm driven by a wanderlust that led me away from home.","I watch over my friends as if they were a litter of newborn pups.","I have a lesson for every situation, drawn from observing nature.","I place no stock in wealthy or well-mannered folk. Money and manners won't save you from a hungry owlbear."],ideals:["Change. Life is like the seasons, always changing.","Greater Good. It is each person's responsibility to make the most happiness for the whole tribe.","Glory. I must earn glory in battle, for myself and my clan."],bonds:["My family, clan, or tribe is the most important thing in my life.","An injury to the unspoiled wilderness is an injury to me."],flaws:["I am too enamored of ale, wine, and other intoxicants.","Violence is my answer to almost any challenge."]},
+  Hermit:{personality:["I've been isolated for so long that I rarely speak, preferring gestures and expressions.","I am utterly serene, even in the face of disaster.","I connect everything that happens to me to a grand cosmic plan.","I am working on a grand philosophical theory and love to discuss it with anyone willing to listen."],ideals:["Greater Good. My gifts are meant to be shared with all, not used for my own benefit.","Live and Let Live. Meddling in the affairs of others only causes trouble.","Self-Knowledge. If you know yourself, there's nothing left to know."],bonds:["I entered seclusion to hide from the ones who might still be hunting me.","I'm still seeking the enlightenment I pursued in my seclusion."],flaws:["I'd rather kill a monster than talk to it.","I am dogmatic in my thoughts and philosophy."]},
+  Entertainer:{personality:["I know a story relevant to almost every situation.","Whenever I come to a new place, I collect local rumors and spread gossip.","I'm a hopeless romantic, always searching for that 'special someone.'","Nobody stays angry at me for long — I can defuse any tension."],ideals:["Beauty. When I perform, I make the world better than it was.","Creativity. The world is in need of new ideas and bold action.","People. I like seeing the smiles on people's faces when I perform."],bonds:["I want to be famous, whatever it takes.","I idolize a hero of the old tales and measure my deeds against that person's."],flaws:["I'll do anything to win fame and renown.","A scandal prevents me from ever going home again."]},
+  "Guild Artisan":{personality:["I believe that anything worth doing is worth doing right.","I'm a snob who looks down on those who can't appreciate fine craftsmanship.","I like to talk at length about my profession.","I don't part with my money easily and will haggle tirelessly."],ideals:["Community. It is the duty of all civilized people to strengthen the bonds of community.","Generosity. My talents were given to me so that I could use them to benefit the world.","Aspiration. I work hard to be the best there is at my craft."],bonds:["The workshop where I learned my trade is the most important place in the world to me.","I owe my guild a great debt for forging me into the person I am today."],flaws:["I'll do anything to get my hands on something rare or priceless.","I'm never satisfied with what I have — I always want more."]},
+  Charlatan:{personality:["I fall in and out of love easily, always pursuing someone new.","I have a joke for every occasion, especially when humor is inappropriate.","Flattery is my preferred trick for getting what I want.","I'm a born gambler who can't resist the thrill of a good bet."],ideals:["Independence. I am a free spirit — no one tells me what to do.","Fairness. I never target people who can't afford to lose a few coins.","Creativity. I never run the same con twice."],bonds:["I fleeced the wrong person and must work to avoid their hired assassins.","I owe everything to my mentor — a con artist who taught me everything."],flaws:["I can't resist a pretty face.","I'm always in debt. I spend my ill-gotten gains on decadent luxuries faster than I bring them in."]},
+  Sailor:{personality:["My friends know they can rely on me, no matter what.","I work hard so that I can play hard when the work is done.","I enjoy sailing into new ports and making new friends over a flagon of ale.","I stretch the truth for the sake of a good story."],ideals:["Respect. Mutual respect between captain and crew is what keeps a ship together.","Freedom. The sea is freedom — the freedom to go anywhere and do anything.","Mastery. I'm a predator, and the other ships on the sea are my prey."],bonds:["I'm loyal to my captain first, everything else second.","I'll always remember my first ship."],flaws:["I follow orders, even if I think they're wrong.","Once I start drinking, it's hard to stop."]},
+}
 
 // ── Level-Up Data ─────────────────────────────────────────────────────────────
 const PROF_BY_LEVEL = [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6]
@@ -1724,238 +1753,361 @@ function LibraryTab({ campaignId, onUpdate, isDM }) {
 
 // ── Character Creation Wizard ─────────────────────────────────────────────────
 function CharacterCreationWizard({ playerName, onApply, onBack }) {
-  const [step, setStep] = useState(0) // 0=race 1=class 2=bg 3=scores 4=skills 5=finalize
+  // Steps: 0=Name 1=Race 2=Class 3=Background 4=AbilityScores 5=Skills 6=Description 7=Review
+  const STEPS = ['Name','Race','Class','Background','Ability Scores','Skills','Description','Review']
+  const [step, setStep] = useState(0)
+  const [name, setName] = useState(playerName||'')
   const [race, setRace] = useState('')
   const [cls, setCls] = useState('')
   const [bg, setBg] = useState('')
-  // Standard array assignment: map ability -> value
-  const [assigned, setAssigned] = useState({str:null,dex:null,con:null,int:null,wis:null,cha:null})
-  const [pending, setPending] = useState(null) // which value is being placed
-  const [chosenSkills, setChosenSkills] = useState([])
-  const [name, setName] = useState(playerName||'')
   const [subclass, setSubclass] = useState('')
+  const [alignment, setAlignment] = useState('')
+  const [personality, setPersonality] = useState('')
+  const [ideals, setIdeals] = useState('')
+  const [bonds, setBonds] = useState('')
+  const [flaws, setFlaws] = useState('')
 
+  // Ability scores — standard array
+  const [scoreMethod, setScoreMethod] = useState('standard') // 'standard' | 'pointbuy'
+  const [assigned, setAssigned] = useState({str:null,dex:null,con:null,int:null,wis:null,cha:null})
+  const [pending, setPending] = useState(null)
+  const [pb, setPb] = useState({str:8,dex:8,con:8,int:8,wis:8,cha:8})
+
+  const [chosenSkills, setChosenSkills] = useState([])
+
+  const rd = RACE_DATA[race]||{}; const cd = CLASS_DATA[cls]||{}; const bd = BACKGROUND_DATA[bg]||{}
+  const asi = rd.asi||{}; const bgSkills = bd.skills||[]; const maxSkills = CLASS_SKILL_CHOICES[cls]||2
+  const subclassLvl = SUBCLASS_LEVEL[cls]||SUBCLASS_LEVEL._default; const subs = SUBCLASSES[cls]||[]
   const usedValues = Object.values(assigned).filter(v=>v!==null)
-  const availableValues = STANDARD_ARRAY.filter(v=>!usedValues.includes(v))
+  const pbSpent = Object.values(pb).reduce((s,v)=>s+(POINT_BUY_COSTS[v]||0),0)
+  const pbLeft = POINT_BUY_TOTAL - pbSpent
 
-  function assignValue(ab) {
-    if(pending===null) return
-    setAssigned(a=>({...a,[ab]:pending}))
-    setPending(null)
+  function assignValue(ab){ if(pending===null)return; setAssigned(a=>({...a,[ab]:pending})); setPending(null) }
+  function clearAssign(ab){ setAssigned(a=>({...a,[ab]:null})) }
+  function pbAdj(ab,delta){
+    const next=pb[ab]+delta
+    if(next<8||next>15)return
+    const newCost=POINT_BUY_COSTS[next]||0; const oldCost=POINT_BUY_COSTS[pb[ab]]||0
+    if(delta>0&&pbLeft<(newCost-oldCost))return
+    setPb(p=>({...p,[ab]:next}))
   }
-  function clearAssign(ab) { setAssigned(a=>({...a,[ab]:null})) }
-
-  function toggleSkill(sk) {
-    const max = CLASS_SKILL_CHOICES[cls]||2
-    const bgSkills = BACKGROUND_DATA[bg]?.skills||[]
-    if(bgSkills.includes(sk)) return // bg skill, not toggleable
-    if(chosenSkills.includes(sk)) {
-      setChosenSkills(cs=>cs.filter(s=>s!==sk))
-    } else if(chosenSkills.length < max) {
-      setChosenSkills(cs=>[...cs,sk])
-    }
+  function toggleSkill(sk){
+    const bg2=bgSkills; if(bg2.includes(sk))return
+    if(chosenSkills.includes(sk)){ setChosenSkills(cs=>cs.filter(s=>s!==sk)) }
+    else if(chosenSkills.length<maxSkills){ setChosenSkills(cs=>[...cs,sk]) }
   }
+  function getScore(ab){ return scoreMethod==='pointbuy' ? pb[ab] : (assigned[ab]||10) }
 
-  function canAdvance() {
-    if(step===0) return !!race
-    if(step===1) return !!cls
-    if(step===2) return !!bg
-    if(step===3) return Object.values(assigned).every(v=>v!==null)
-    if(step===4) return chosenSkills.length === (CLASS_SKILL_CHOICES[cls]||2)
-    if(step===5) return !!name.trim()
+  function canAdvance(){
+    if(step===0) return !!name.trim()
+    if(step===1) return !!race
+    if(step===2) return !!cls
+    if(step===3) return !!bg
+    if(step===4) return scoreMethod==='pointbuy' ? true : Object.values(assigned).every(v=>v!==null)
+    if(step===5) return chosenSkills.length===(CLASS_SKILL_CHOICES[cls]||2)
     return true
   }
 
-  function finish() {
-    const scores = {}
-    ABILITIES.forEach(a => scores[a] = assigned[a]||10)
-    const sheet = sheetFromTemplate(name.trim(), cls, race, bg, 1, scores, chosenSkills)
-    if(subclass) sheet.subclass = subclass
+  function finish(){
+    const scores={}; ABILITIES.forEach(a=>scores[a]=getScore(a))
+    const sheet=sheetFromTemplate(name.trim(),cls,race,bg,1,scores,chosenSkills)
+    if(subclass) sheet.subclass=subclass
+    if(alignment) sheet.alignment=alignment
+    if(personality) sheet.personalityTraits=personality
+    if(ideals) sheet.ideals=ideals
+    if(bonds) sheet.bonds=bonds
+    if(flaws) sheet.flaws=flaws
     onApply(sheet)
   }
 
-  const rd = RACE_DATA[race]||{}
-  const cd = CLASS_DATA[cls]||{}
-  const bd = BACKGROUND_DATA[bg]||{}
-  const availClassSkills = (CLASS_SKILLS[cls]||[]).filter(s=>!(BACKGROUND_DATA[bg]?.skills||[]).includes(s))
-  const bgSkills = bd.skills||[]
-  const maxSkills = CLASS_SKILL_CHOICES[cls]||2
-  const subclassLvl = SUBCLASS_LEVEL[cls]||SUBCLASS_LEVEL._default
-  const subs = SUBCLASSES[cls]||[]
-
-  const STEPS = ['Race','Class','Background','Ability Scores','Skills','Finalize']
-  const asi = rd.asi||{}
+  const flavor = BG_FLAVOR[bg]||{}
 
   return (
     <div className="modal-overlay" onClick={onBack}>
-      <div className="import-modal-inner" style={{maxWidth:760}} onClick={e=>e.stopPropagation()}>
-        {/* Step bar */}
+      <div className="import-modal-inner" style={{maxWidth:780}} onClick={e=>e.stopPropagation()}>
+        {/* Progress bar */}
         <div className="flex items-center justify-between" style={{marginBottom:'1rem'}}>
-          <div className="flex gap-1" style={{flexWrap:'wrap'}}>
+          <div className="flex gap-1" style={{flexWrap:'wrap',flex:1}}>
             {STEPS.map((s,i)=>(
-              <span key={i} style={{fontSize:'.72rem',padding:'.2rem .5rem',borderRadius:3,
-                background: i===step?'var(--gold)':i<step?'rgba(201,168,76,.3)':'rgba(255,255,255,.05)',
-                color: i===step?'#1a1209':i<step?'var(--gold-dark)':'rgba(244,232,193,.4)',
-                fontFamily:'Cinzel,serif',cursor:i<step?'pointer':'default'
-              }} onClick={()=>{if(i<step)setStep(i)}}>{i+1}. {s}</span>
+              <span key={i} onClick={()=>{if(i<step)setStep(i)}} style={{fontSize:'.68rem',padding:'.18rem .45rem',borderRadius:3,fontFamily:'Cinzel,serif',cursor:i<step?'pointer':'default',
+                background:i===step?'var(--gold)':i<step?'rgba(201,168,76,.25)':'rgba(255,255,255,.04)',
+                color:i===step?'#1a1209':i<step?'var(--gold-dark)':'rgba(244,232,193,.35)'}}>
+                {i+1}. {s}
+              </span>
             ))}
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>✕</button>
+          <button className="btn btn-ghost btn-sm" style={{marginLeft:'.5rem'}} onClick={onBack}>✕</button>
         </div>
 
-        <div style={{overflow:'auto',maxHeight:'65vh'}}>
+        <div style={{overflow:'auto',maxHeight:'62vh'}}>
 
-        {/* STEP 0 — RACE */}
+        {/* ── STEP 0: NAME ── */}
         {step===0&&<div>
-          <h3 style={{color:'var(--gold)',marginBottom:'.75rem'}}>Choose Your Race</h3>
+          <h3 style={{color:'var(--gold)',marginBottom:'.4rem'}}>What is your character's name?</h3>
+          <p style={{fontSize:'.83rem',color:'rgba(244,232,193,.55)',marginBottom:'1.25rem',fontFamily:'IM Fell English,serif',fontStyle:'italic'}}>Every legend begins with a name. Choose wisely — it will echo through the halls of history.</p>
+          <div className="form-group">
+            <label className="form-label">Character Name</label>
+            <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Theron Brightblade…" autoFocus style={{fontSize:'1.1rem',letterSpacing:'.02em'}}/>
+          </div>
+          <p style={{fontSize:'.78rem',color:'rgba(244,232,193,.35)',marginTop:'1rem'}}>You can change this later on your character sheet.</p>
+        </div>}
+
+        {/* ── STEP 1: RACE ── */}
+        {step===1&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.3rem'}}>Choose Your Race</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.5)',marginBottom:'.85rem'}}>Your race determines your ancestry, physical traits, and some innate abilities.</p>
           <div className="race-bg-grid">
-            {Object.entries(RACE_DATA).map(([r,rd])=>(
+            {Object.entries(RACE_DATA).map(([r,d])=>(
               <button key={r} className={`race-btn${race===r?' selected':''}`} onClick={()=>setRace(r)}>
                 <strong>{r}</strong>
-                <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.5)',marginTop:'.2rem'}}>
-                  {Object.entries(rd.asi||{}).map(([a,v])=>`+${v} ${a.toUpperCase()}`).join(', ')} · {rd.speed} ft
+                <div style={{fontSize:'.62rem',color:'rgba(244,232,193,.45)',marginTop:'.2rem'}}>
+                  {Object.entries(d.asi||{}).map(([a,v])=>`+${v} ${a.toUpperCase()}`).join(', ')} · {d.speed} ft
                 </div>
               </button>
             ))}
           </div>
-          {race&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginTop:'1rem',fontSize:'.83rem'}}>
-            <strong style={{color:'var(--gold)'}}>{race} Traits: </strong>
-            <span style={{color:'rgba(244,232,193,.8)'}}>{rd.traits}</span>
+          {race&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.22)',borderRadius:5,padding:'1rem',marginTop:'1rem',fontSize:'.84rem'}}>
+            <div style={{display:'flex',gap:'2rem',flexWrap:'wrap',marginBottom:'.6rem'}}>
+              <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Speed</span><br/><strong>{rd.speed} ft</strong></div>
+              <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Ability Bonuses</span><br/><strong>{Object.entries(rd.asi||{}).map(([a,v])=>`+${v} ${a.toUpperCase()}`).join(', ')||'—'}</strong></div>
+            </div>
+            <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Traits</span><br/><span style={{color:'rgba(244,232,193,.8)'}}>{rd.traits}</span></div>
           </div>}
         </div>}
 
-        {/* STEP 1 — CLASS */}
-        {step===1&&<div>
-          <h3 style={{color:'var(--gold)',marginBottom:'.75rem'}}>Choose Your Class</h3>
+        {/* ── STEP 2: CLASS ── */}
+        {step===2&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.3rem'}}>Choose Your Class</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.5)',marginBottom:'.85rem'}}>Your class is your adventuring profession and the foundation of your abilities.</p>
           <div className="class-grid">
-            {Object.entries(CLASS_DATA).map(([c,cd])=>(
+            {Object.entries(CLASS_DATA).map(([c,d])=>(
               <div key={c} className={`class-card${cls===c?' selected':''}`} onClick={()=>setCls(c)}>
-                <div className="class-icon">{cd.icon}</div>
+                <div className="class-icon">{d.icon}</div>
                 <div className="class-name">{c}</div>
-                <div className="class-dice">{cd.hitDice} · {cd.primary}</div>
+                <div className="class-dice">{d.hitDice} · {d.primary}</div>
               </div>
             ))}
           </div>
-          {cls&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginTop:'1rem',fontSize:'.83rem'}}>
-            <div style={{marginBottom:'.4rem'}}><strong style={{color:'var(--gold)'}}>{cls} Features: </strong><span style={{color:'rgba(244,232,193,.8)'}}>{cd.features}</span></div>
-            <div style={{color:'rgba(244,232,193,.55)',fontSize:'.78rem'}}>Saving Throws: {Object.keys(cd.saves||{}).map(a=>a.toUpperCase()).join(', ')} · Subclass at level {subclassLvl}</div>
+          {cls&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.22)',borderRadius:5,padding:'1rem',marginTop:'1rem',fontSize:'.84rem'}}>
+            <div style={{display:'flex',gap:'2rem',flexWrap:'wrap',marginBottom:'.65rem'}}>
+              <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Hit Die</span><br/><strong>{cd.hitDice}</strong></div>
+              <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Primary Ability</span><br/><strong>{cd.primary}</strong></div>
+              <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Saving Throws</span><br/><strong>{Object.keys(cd.saves||{}).map(a=>a.toUpperCase()).join(', ')}</strong></div>
+              {cd.spellcasting&&<div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Spellcasting</span><br/><strong>{cd.spellcasting}</strong></div>}
+            </div>
+            <div style={{marginBottom:'.5rem'}}><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>1st Level Features</span><br/><span style={{color:'rgba(244,232,193,.8)'}}>{cd.features}</span></div>
+            <div style={{fontSize:'.78rem',color:'rgba(244,232,193,.45)'}}><strong>Starting Equipment:</strong> {cd.equipment}</div>
+            {subclassLvl<=3&&subs.length>0&&<div style={{marginTop:'.65rem'}}>
+              <label style={{fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em',color:'var(--gold-dark)'}}>Subclass (chosen at level {subclassLvl})</label>
+              <select className="form-input" value={subclass} onChange={e=>setSubclass(e.target.value)} style={{marginTop:'.3rem',cursor:'pointer'}}>
+                <option value="">— Choose later —</option>
+                {subs.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>}
           </div>}
         </div>}
 
-        {/* STEP 2 — BACKGROUND */}
-        {step===2&&<div>
-          <h3 style={{color:'var(--gold)',marginBottom:'.75rem'}}>Choose Your Background</h3>
+        {/* ── STEP 3: BACKGROUND ── */}
+        {step===3&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.3rem'}}>Choose Your Background</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.5)',marginBottom:'.85rem'}}>Your background reflects where you came from and the skills you developed before adventuring.</p>
           <div className="race-bg-grid">
-            {Object.entries(BACKGROUND_DATA).map(([b,bd])=>(
+            {Object.entries(BACKGROUND_DATA).map(([b,d])=>(
               <button key={b} className={`race-btn${bg===b?' selected':''}`} onClick={()=>setBg(b)}>
                 <strong>{b}</strong>
-                <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.5)',marginTop:'.2rem'}}>{bd.skills.map(s=>SKILL_NAMES[s]||s).join(', ')}</div>
+                <div style={{fontSize:'.62rem',color:'rgba(244,232,193,.45)',marginTop:'.2rem'}}>{d.skills.map(s=>SKILL_NAMES[s]||s).join(', ')}</div>
               </button>
             ))}
           </div>
-          {bg&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.2)',borderRadius:4,padding:'.75rem',marginTop:'1rem',fontSize:'.83rem'}}>
-            <strong style={{color:'var(--gold)'}}>{bg} Feature: </strong><span style={{color:'rgba(244,232,193,.8)'}}>{bd.feature}</span>
-            <div style={{marginTop:'.3rem',color:'rgba(244,232,193,.55)',fontSize:'.78rem'}}>Equipment: {bd.equipment}</div>
+          {bg&&<div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.22)',borderRadius:5,padding:'1rem',marginTop:'1rem',fontSize:'.84rem'}}>
+            <div style={{display:'flex',gap:'2rem',flexWrap:'wrap',marginBottom:'.65rem'}}>
+              <div><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Skill Proficiencies</span><br/><strong>{bd.skills.map(s=>SKILL_NAMES[s]||s).join(', ')}</strong></div>
+            </div>
+            <div style={{marginBottom:'.5rem'}}><span style={{color:'var(--gold-dark)',fontFamily:'Cinzel,serif',fontSize:'.7rem',textTransform:'uppercase',letterSpacing:'.08em'}}>Feature: {bg}</span><br/><span style={{color:'rgba(244,232,193,.8)'}}>{bd.feature}</span></div>
+            <div style={{fontSize:'.78rem',color:'rgba(244,232,193,.45)'}}><strong>Equipment:</strong> {bd.equipment}</div>
           </div>}
         </div>}
 
-        {/* STEP 3 — ABILITY SCORES */}
-        {step===3&&<div>
-          <h3 style={{color:'var(--gold)',marginBottom:'.25rem'}}>Assign Ability Scores</h3>
-          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.6)',marginBottom:'1rem'}}>
-            Standard array: {STANDARD_ARRAY.join(', ')}. Click a value to pick it up, then click a stat to assign it. Racial bonuses shown in gold.
-          </p>
-          {/* Available values */}
-          <div className="flex gap-2" style={{marginBottom:'1.25rem',flexWrap:'wrap'}}>
-            {STANDARD_ARRAY.map((v,i)=>{
-              const taken = usedValues.includes(v) && usedValues.filter(x=>x===v).length >= STANDARD_ARRAY.filter(x=>x===v).length
-              return <button key={i}
-                className={`btn btn-sm${pending===v?' btn-primary':taken?' btn-ghost':' btn-ghost'}`}
-                style={{opacity:taken?.4:1,minWidth:44,fontFamily:'Cinzel,serif',fontSize:'1rem',fontWeight:600,
-                  border:pending===v?'1px solid var(--gold)':undefined}}
-                onClick={()=>{if(!taken)setPending(pending===v?null:v)}}
-                disabled={taken}>{v}</button>
-            })}
-            {pending!==null&&<span style={{fontSize:'.8rem',color:'var(--gold)',alignSelf:'center'}}>← click a stat to place {pending}</span>}
+        {/* ── STEP 4: ABILITY SCORES ── */}
+        {step===4&&<div>
+          <div className="flex items-center justify-between" style={{marginBottom:'.5rem'}}>
+            <h3 style={{color:'var(--gold)'}}>Ability Scores</h3>
+            <div className="flex gap-1">
+              {['standard','pointbuy'].map(m=>(
+                <button key={m} onClick={()=>setScoreMethod(m)} style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',padding:'.25rem .6rem',borderRadius:3,cursor:'pointer',border:`1px solid ${scoreMethod===m?'var(--gold)':'rgba(201,168,76,.25)'}`,background:scoreMethod===m?'rgba(201,168,76,.15)':'transparent',color:scoreMethod===m?'var(--gold)':'rgba(244,232,193,.5)',textTransform:'uppercase',letterSpacing:'.06em'}}>
+                  {m==='standard'?'Standard Array':'Point Buy'}
+                </button>
+              ))}
+            </div>
           </div>
-          {/* Stat boxes */}
-          <div className="cs-grid cs-grid-3" style={{gap:'.6rem'}}>
-            {ABILITIES.map(ab=>{
-              const val = assigned[ab]
-              const bonus = asi[ab]||0
-              const total = val!==null ? val+bonus : null
-              return <div key={ab} style={{background:'rgba(0,0,0,.25)',border:`1px solid ${val!==null?'rgba(201,168,76,.4)':'rgba(255,255,255,.08)'}`,borderRadius:6,padding:'.75rem',textAlign:'center',cursor:pending!==null?'pointer':'default',transition:'border-color .15s'}}
-                onClick={()=>val===null?assignValue(ab):clearAssign(ab)}>
-                <div style={{fontFamily:'Cinzel,serif',fontSize:'.7rem',color:'var(--gold-dark)',letterSpacing:'.1em'}}>{ab.toUpperCase()}</div>
-                {bonus>0&&<div style={{fontSize:'.65rem',color:'var(--gold)',marginBottom:'.2rem'}}>+{bonus} racial</div>}
-                <div style={{fontSize:'1.6rem',fontFamily:'Cinzel,serif',color:val!==null?'var(--parchment)':'rgba(244,232,193,.2)',fontWeight:700}}>{total!==null?total:'—'}</div>
-                {val!==null&&<div style={{fontSize:'.72rem',color:'rgba(244,232,193,.5)',marginTop:'.1rem'}}>{val}{bonus>0?`+${bonus}`:''} · {modStr(total)}</div>}
-                {val!==null&&<div style={{fontSize:'.65rem',color:'rgba(232,112,112,.6)',marginTop:'.2rem',cursor:'pointer'}} onClick={e=>{e.stopPropagation();clearAssign(ab)}}>✕ clear</div>}
-              </div>
-            })}
-          </div>
+          {cd.primary&&<p style={{fontSize:'.78rem',color:'rgba(201,168,76,.7)',marginBottom:'.85rem'}}>💡 As a <strong>{cls}</strong>, prioritize <strong>{cd.primary}</strong>.</p>}
+
+          {scoreMethod==='standard'&&<>
+            <p style={{fontSize:'.81rem',color:'rgba(244,232,193,.55)',marginBottom:'1rem'}}>Click a value below to pick it up, then click a stat box to place it.</p>
+            <div className="flex gap-2" style={{marginBottom:'1.25rem',flexWrap:'wrap'}}>
+              {STANDARD_ARRAY.map((v,i)=>{
+                const taken=usedValues.includes(v)&&usedValues.filter(x=>x===v).length>=STANDARD_ARRAY.filter(x=>x===v).length
+                return <button key={i} disabled={taken} onClick={()=>{if(!taken)setPending(pending===v?null:v)}}
+                  style={{minWidth:46,fontFamily:'Cinzel,serif',fontSize:'1.1rem',fontWeight:700,padding:'.3rem .5rem',borderRadius:4,cursor:taken?'default':'pointer',
+                    border:`1px solid ${pending===v?'var(--gold)':'rgba(201,168,76,.25)'}`,
+                    background:pending===v?'rgba(201,168,76,.2)':taken?'rgba(0,0,0,.2)':'rgba(0,0,0,.25)',
+                    color:taken?'rgba(244,232,193,.2)':pending===v?'var(--gold)':'var(--parchment)',opacity:taken?.5:1}}>
+                  {v}
+                </button>
+              })}
+              {pending!==null&&<span style={{fontSize:'.8rem',color:'var(--gold)',alignSelf:'center'}}>← click a stat to place {pending}</span>}
+            </div>
+            <div className="cs-grid cs-grid-3" style={{gap:'.6rem'}}>
+              {ABILITIES.map(ab=>{
+                const val=assigned[ab]; const bonus=asi[ab]||0; const total=val!==null?val+bonus:null
+                return <div key={ab} onClick={()=>val===null?assignValue(ab):clearAssign(ab)}
+                  style={{background:'rgba(0,0,0,.25)',border:`1px solid ${val!==null?'rgba(201,168,76,.4)':'rgba(255,255,255,.08)'}`,borderRadius:6,padding:'.75rem',textAlign:'center',cursor:pending!==null||val!==null?'pointer':'default',transition:'border-color .15s'}}>
+                  <div style={{fontFamily:'Cinzel,serif',fontSize:'.7rem',color:'var(--gold-dark)',letterSpacing:'.1em'}}>{ab.toUpperCase()}</div>
+                  {bonus>0&&<div style={{fontSize:'.62rem',color:'var(--gold)',marginBottom:'.15rem'}}>+{bonus} racial</div>}
+                  <div style={{fontSize:'1.6rem',fontFamily:'Cinzel,serif',color:val!==null?'var(--parchment)':'rgba(244,232,193,.2)',fontWeight:700}}>{total!==null?total:'—'}</div>
+                  {val!==null&&<div style={{fontSize:'.7rem',color:'rgba(244,232,193,.45)',marginTop:'.1rem'}}>{val}{bonus>0?`+${bonus}`:''} · {modStr(total)}</div>}
+                  {val!==null&&<div style={{fontSize:'.62rem',color:'rgba(232,112,112,.6)',marginTop:'.2rem'}} onClick={e=>{e.stopPropagation();clearAssign(ab)}}>✕ clear</div>}
+                </div>
+              })}
+            </div>
+          </>}
+
+          {scoreMethod==='pointbuy'&&<>
+            <p style={{fontSize:'.81rem',color:'rgba(244,232,193,.55)',marginBottom:'1rem'}}>Distribute {POINT_BUY_TOTAL} points across your abilities. Scores start at 8 and can go up to 15.</p>
+            <div style={{display:'flex',alignItems:'center',gap:'.75rem',marginBottom:'1.25rem'}}>
+              <div style={{fontFamily:'Cinzel,serif',fontSize:'1.1rem',color:pbLeft===0?'var(--gold)':pbLeft<0?'#E87070':'var(--parchment)',fontWeight:700}}>{pbLeft}</div>
+              <div style={{fontSize:'.8rem',color:'rgba(244,232,193,.5)'}}>points remaining</div>
+              <div style={{flex:1,height:4,background:'rgba(0,0,0,.3)',borderRadius:2}}><div style={{height:'100%',borderRadius:2,background:'var(--gold)',width:`${Math.max(0,(POINT_BUY_TOTAL-pbLeft)/POINT_BUY_TOTAL*100)}%`,transition:'width .2s'}}/></div>
+            </div>
+            <div className="cs-grid cs-grid-3" style={{gap:'.6rem'}}>
+              {ABILITIES.map(ab=>{
+                const val=pb[ab]; const bonus=asi[ab]||0; const total=val+bonus
+                return <div key={ab} style={{background:'rgba(0,0,0,.25)',border:'1px solid rgba(201,168,76,.3)',borderRadius:6,padding:'.75rem',textAlign:'center'}}>
+                  <div style={{fontFamily:'Cinzel,serif',fontSize:'.7rem',color:'var(--gold-dark)',letterSpacing:'.1em'}}>{ab.toUpperCase()}</div>
+                  {bonus>0&&<div style={{fontSize:'.62rem',color:'var(--gold)',marginBottom:'.15rem'}}>+{bonus} racial</div>}
+                  <div style={{fontSize:'1.5rem',fontFamily:'Cinzel,serif',color:'var(--parchment)',fontWeight:700,margin:'.2rem 0'}}>{total}</div>
+                  <div style={{fontSize:'.65rem',color:'rgba(244,232,193,.4)',marginBottom:'.4rem'}}>{val} base · {modStr(total)}</div>
+                  <div className="flex gap-1 justify-center">
+                    <button onClick={()=>pbAdj(ab,-1)} disabled={val<=8} style={{width:24,height:24,borderRadius:3,border:'1px solid rgba(201,168,76,.3)',background:'rgba(0,0,0,.3)',color:'var(--parchment)',cursor:'pointer',fontSize:'.85rem',lineHeight:1}}>−</button>
+                    <button onClick={()=>pbAdj(ab,1)} disabled={val>=15||(pbLeft<=(POINT_BUY_COSTS[val+1]||0)-(POINT_BUY_COSTS[val]||0)&&pbLeft<(POINT_BUY_COSTS[val+1]||0)-(POINT_BUY_COSTS[val]||0))} style={{width:24,height:24,borderRadius:3,border:'1px solid rgba(201,168,76,.3)',background:'rgba(0,0,0,.3)',color:'var(--parchment)',cursor:'pointer',fontSize:'.85rem',lineHeight:1}}>+</button>
+                  </div>
+                </div>
+              })}
+            </div>
+          </>}
         </div>}
 
-        {/* STEP 4 — SKILLS */}
-        {step===4&&<div>
-          <h3 style={{color:'var(--gold)',marginBottom:'.25rem'}}>Choose Skill Proficiencies</h3>
-          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.6)',marginBottom:'1rem'}}>
-            As a {cls}, choose <strong style={{color:'var(--gold)'}}>{maxSkills}</strong> skills from the list below. ({chosenSkills.length}/{maxSkills} chosen)
-            {bgSkills.length>0&&<> · Background gives: <strong style={{color:'var(--gold-dark)'}}>{bgSkills.map(s=>SKILL_NAMES[s]).join(', ')}</strong></>}
+        {/* ── STEP 5: SKILLS ── */}
+        {step===5&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.3rem'}}>Choose Skill Proficiencies</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.55)',marginBottom:'1rem'}}>
+            As a <strong style={{color:'var(--gold)'}}>{cls}</strong>, choose <strong style={{color:'var(--gold)'}}>{maxSkills}</strong> additional skills. ({chosenSkills.length}/{maxSkills} selected)
+            {bgSkills.length>0&&<span style={{color:'rgba(244,232,193,.45)'}}> · Your background already grants: <strong>{bgSkills.map(s=>SKILL_NAMES[s]).join(', ')}</strong></span>}
           </p>
           <div style={{columns:2,columnGap:'1.5rem'}}>
             {(CLASS_SKILLS[cls]||[]).map(sk=>{
-              const isBg = bgSkills.includes(sk)
-              const isChosen = chosenSkills.includes(sk) || isBg
-              const maxed = chosenSkills.length >= maxSkills && !isBg && !chosenSkills.includes(sk)
-              return <div key={sk} className="skill-row" style={{breakInside:'avoid',cursor:isBg?'default':'pointer',opacity:maxed?.5:1,marginBottom:'.3rem'}}
-                onClick={()=>!isBg&&toggleSkill(sk)}>
+              const isBg=bgSkills.includes(sk); const isChosen=chosenSkills.includes(sk)||isBg
+              const maxed=chosenSkills.length>=maxSkills&&!isBg&&!chosenSkills.includes(sk)
+              return <div key={sk} className="skill-row" style={{breakInside:'avoid',cursor:isBg?'default':'pointer',opacity:maxed?.45:1,marginBottom:'.35rem'}} onClick={()=>!isBg&&toggleSkill(sk)}>
                 <input type="checkbox" className="skill-check" checked={isChosen} onChange={()=>{}} disabled={isBg}/>
-                <span className="skill-name">{SKILL_NAMES[sk]||sk} {isBg?<span style={{fontSize:'.65rem',color:'var(--gold-dark)'}}>(bg)</span>:null}</span>
+                <span className="skill-name">{SKILL_NAMES[sk]||sk}{isBg&&<span style={{fontSize:'.62rem',color:'var(--gold-dark)',marginLeft:'.3rem'}}>(background)</span>}</span>
               </div>
             })}
           </div>
         </div>}
 
-        {/* STEP 5 — FINALIZE */}
-        {step===5&&<div>
-          <h3 style={{color:'var(--gold)',marginBottom:'1rem'}}>Finalize Your Character</h3>
-          <div className="form-group">
-            <label className="form-label">Character Name</label>
-            <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Theron Brightblade" autoFocus/>
+        {/* ── STEP 6: DESCRIPTION ── */}
+        {step===6&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'.3rem'}}>Describe Your Character</h3>
+          <p style={{fontSize:'.82rem',color:'rgba(244,232,193,.5)',marginBottom:'1rem'}}>Define your character's soul — their beliefs, personality, and place in the world. Click any suggestion to use it.</p>
+
+          {/* Alignment */}
+          <div style={{marginBottom:'1.25rem'}}>
+            <label style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',display:'block',marginBottom:'.5rem'}}>Alignment</label>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'.35rem',maxWidth:360}}>
+              {ALIGNMENTS.map(a=>(
+                <button key={a} onClick={()=>setAlignment(alignment===a?'':a)} style={{padding:'.4rem .3rem',fontSize:'.72rem',fontFamily:'Cinzel,serif',borderRadius:3,cursor:'pointer',border:`1px solid ${alignment===a?'var(--gold)':'rgba(201,168,76,.2)'}`,background:alignment===a?'rgba(201,168,76,.18)':'rgba(0,0,0,.2)',color:alignment===a?'var(--gold)':'rgba(244,232,193,.6)',textAlign:'center',transition:'all .15s'}}>
+                  {a}
+                </button>
+              ))}
+            </div>
           </div>
-          {subs.length>0&&<div className="form-group" style={{marginTop:'.75rem'}}>
-            <label className="form-label">Subclass (optional — chosen at level {subclassLvl})</label>
+
+          {/* Personality / Ideals / Bonds / Flaws */}
+          {[
+            {key:'personality',label:'Personality Traits',setter:setPersonality,val:personality,hint:'How does your character behave and interact with others?'},
+            {key:'ideals',label:'Ideals',setter:setIdeals,val:ideals,hint:'What principles drive your character?'},
+            {key:'bonds',label:'Bonds',setter:setBonds,val:bonds,hint:'What people, places, or things matter most to your character?'},
+            {key:'flaws',label:'Flaws',setter:setFlaws,val:flaws,hint:'What weaknesses or vices does your character have?'},
+          ].map(({key,label,setter,val,hint})=>(
+            <div key={key} style={{marginBottom:'1rem'}}>
+              <label style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',display:'block',marginBottom:'.3rem'}}>{label}</label>
+              <textarea className="form-input" rows={2} value={val} onChange={e=>setter(e.target.value)} placeholder={hint} style={{resize:'vertical',minHeight:52}}/>
+              {(flavor[key]||[]).length>0&&<div style={{display:'flex',gap:'.3rem',flexWrap:'wrap',marginTop:'.35rem'}}>
+                {(flavor[key]||[]).map((s,i)=>(
+                  <button key={i} onClick={()=>setter(s)} style={{fontSize:'.68rem',padding:'.18rem .4rem',borderRadius:3,cursor:'pointer',border:'1px solid rgba(201,168,76,.2)',background:val===s?'rgba(201,168,76,.15)':'rgba(0,0,0,.2)',color:val===s?'var(--gold)':'rgba(244,232,193,.5)',textAlign:'left',maxWidth:260,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                    💡 {s}
+                  </button>
+                ))}
+              </div>}
+            </div>
+          ))}
+        </div>}
+
+        {/* ── STEP 7: REVIEW ── */}
+        {step===7&&<div>
+          <h3 style={{color:'var(--gold)',marginBottom:'1rem'}}>Review Your Character</h3>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+            <div style={{background:'rgba(0,0,0,.2)',border:'1px solid rgba(201,168,76,.15)',borderRadius:5,padding:'.85rem'}}>
+              <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Identity</div>
+              {[['Name',name],['Race',race],['Class',cls+(subclass?` — ${subclass}`:'')],['Background',bg],['Alignment',alignment||'—']].map(([k,v])=>(
+                <div key={k} style={{fontSize:'.83rem',marginBottom:'.25rem'}}><span style={{color:'rgba(244,232,193,.45)'}}>{k}: </span><strong>{v}</strong></div>
+              ))}
+            </div>
+            <div style={{background:'rgba(0,0,0,.2)',border:'1px solid rgba(201,168,76,.15)',borderRadius:5,padding:'.85rem'}}>
+              <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Ability Scores</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.2rem .75rem'}}>
+                {ABILITIES.map(ab=>{const total=getScore(ab)+(asi[ab]||0); return <div key={ab} style={{fontSize:'.82rem'}}><span style={{color:'rgba(244,232,193,.45)'}}>{ab.toUpperCase()}: </span><strong>{total}</strong> <span style={{fontSize:'.7rem',color:'rgba(244,232,193,.4)'}}>{modStr(total)}</span></div>})}
+              </div>
+            </div>
+            <div style={{background:'rgba(0,0,0,.2)',border:'1px solid rgba(201,168,76,.15)',borderRadius:5,padding:'.85rem'}}>
+              <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Proficiencies & Combat</div>
+              <div style={{fontSize:'.82rem',marginBottom:'.25rem'}}><span style={{color:'rgba(244,232,193,.45)'}}>Hit Die: </span><strong>{cd.hitDice}</strong></div>
+              <div style={{fontSize:'.82rem',marginBottom:'.25rem'}}><span style={{color:'rgba(244,232,193,.45)'}}>Saving Throws: </span><strong>{Object.keys(cd.saves||{}).map(a=>a.toUpperCase()).join(', ')}</strong></div>
+              <div style={{fontSize:'.82rem'}}><span style={{color:'rgba(244,232,193,.45)'}}>Skills: </span><strong>{[...new Set([...bgSkills,...chosenSkills])].map(s=>SKILL_NAMES[s]).join(', ')||'—'}</strong></div>
+            </div>
+            <div style={{background:'rgba(0,0,0,.2)',border:'1px solid rgba(201,168,76,.15)',borderRadius:5,padding:'.85rem'}}>
+              <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Starting Equipment</div>
+              <div style={{fontSize:'.78rem',color:'rgba(244,232,193,.65)',lineHeight:1.5}}>{cd.equipment}</div>
+              <div style={{fontSize:'.75rem',color:'rgba(244,232,193,.4)',marginTop:'.4rem'}}>{bd.equipment}</div>
+            </div>
+          </div>
+          {(personality||ideals||bonds||flaws)&&<div style={{background:'rgba(0,0,0,.2)',border:'1px solid rgba(201,168,76,.15)',borderRadius:5,padding:'.85rem',marginTop:'1rem'}}>
+            <div style={{fontFamily:'Cinzel,serif',fontSize:'.68rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',marginBottom:'.5rem'}}>Character Description</div>
+            {[['Personality',personality],['Ideals',ideals],['Bonds',bonds],['Flaws',flaws]].filter(([,v])=>v).map(([k,v])=>(
+              <div key={k} style={{fontSize:'.81rem',marginBottom:'.3rem'}}><span style={{color:'rgba(244,232,193,.45)'}}>{k}: </span><span style={{color:'rgba(244,232,193,.8)'}}>{v}</span></div>
+            ))}
+          </div>}
+          {subs.length>0&&subclassLvl>3&&!subclass&&<div style={{marginTop:'1rem'}}>
+            <label style={{fontFamily:'Cinzel,serif',fontSize:'.72rem',textTransform:'uppercase',letterSpacing:'.1em',color:'var(--gold-dark)',display:'block',marginBottom:'.3rem'}}>Subclass (optional — you choose at level {subclassLvl})</label>
             <select className="form-input" value={subclass} onChange={e=>setSubclass(e.target.value)} style={{cursor:'pointer'}}>
               <option value="">— Choose later —</option>
               {subs.map(s=><option key={s} value={s}>{s}</option>)}
             </select>
           </div>}
-          <div style={{background:'rgba(201,168,76,.06)',border:'1px solid rgba(201,168,76,.15)',borderRadius:6,padding:'1rem',marginTop:'1rem',fontSize:'.83rem'}}>
-            <div className="cs-grid cs-grid-2" style={{gap:'.5rem .75rem'}}>
-              <div><span style={{color:'var(--gold-dark)'}}>Race:</span> <strong>{race}</strong></div>
-              <div><span style={{color:'var(--gold-dark)'}}>Class:</span> <strong>{cls}</strong></div>
-              <div><span style={{color:'var(--gold-dark)'}}>Background:</span> <strong>{bg}</strong></div>
-              <div><span style={{color:'var(--gold-dark)'}}>Hit Dice:</span> <strong>{cd.hitDice}</strong></div>
-              {ABILITIES.map(ab=>{
-                const bonus=asi[ab]||0; const total=(assigned[ab]||10)+bonus
-                return <div key={ab}><span style={{color:'var(--gold-dark)'}}>{ab.toUpperCase()}:</span> <strong>{total}</strong> <span style={{color:'rgba(244,232,193,.4)',fontSize:'.75rem'}}>{modStr(total)}{bonus?` (+${bonus} racial)`:''}</span></div>
-              })}
-            </div>
-            {(chosenSkills.length||bgSkills.length)>0&&<div style={{marginTop:'.5rem'}}>
-              <span style={{color:'var(--gold-dark)'}}>Skills:</span> <strong>{[...new Set([...bgSkills,...chosenSkills])].map(s=>SKILL_NAMES[s]).join(', ')}</strong>
-            </div>}
-          </div>
         </div>}
 
         </div>{/* end scroll */}
 
-        <div className="flex gap-2" style={{marginTop:'1rem',justifyContent:'space-between'}}>
+        <div className="flex gap-2" style={{marginTop:'1rem',justifyContent:'space-between',alignItems:'center'}}>
           <button className="btn btn-ghost btn-sm" onClick={()=>step===0?onBack():setStep(s=>s-1)}>← Back</button>
-          {step<5
-            ? <button className="btn btn-primary" disabled={!canAdvance()} onClick={()=>setStep(s=>s+1)}>Next →</button>
-            : <button className="btn btn-primary" disabled={!canAdvance()} onClick={finish}>✓ Create Character</button>
-          }
+          <div className="flex gap-2 items-center">
+            {step<7&&step>=6&&<button className="btn btn-ghost btn-sm" onClick={()=>setStep(7)}>Skip to Review</button>}
+            {step<7
+              ? <button className="btn btn-primary" disabled={!canAdvance()} onClick={()=>setStep(s=>s+1)}>Next →</button>
+              : <button className="btn btn-primary" onClick={finish}>⚔ Enter the Story</button>
+            }
+          </div>
         </div>
       </div>
     </div>
@@ -2617,7 +2769,10 @@ function PlayersTab({ campaign }) {
               <h3>{s.characterName||name}</h3>
               <div style={{fontSize:'.72rem',color:'var(--gold-dark)',fontFamily:'Cinzel,serif',marginBottom:'.25rem'}}>{name}</div>
               <div className="cs-preview">{[s.race&&s.class?`${s.race} ${s.class}`:null,s.level?`Level ${s.level}`:null,s.background||null].filter(Boolean).join(' · ')||'Sheet not filled yet'}</div>
-              <div className="mt-2"><button className="btn btn-ghost btn-sm">View Sheet →</button></div>
+              <div className="mt-2 flex gap-2">
+                <button className="btn btn-ghost btn-sm" style={{flex:1}}>View Sheet →</button>
+                <button className="btn btn-danger btn-sm" onClick={e=>{e.stopPropagation();if(confirm(`Kick ${name} from the campaign?`))Storage.kickPlayer(campaign.id,name).then(()=>{Storage.getPlayersWithSheets(campaign.id).then(s=>setSheets(s||{}))})}} title="Kick player">✕</button>
+              </div>
             </div>
           })}
         </div>
