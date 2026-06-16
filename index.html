@@ -2341,6 +2341,17 @@ function CharacterSheet({ campaignId, playerName, readOnly=false }) {
   const [levelUpData,setLevelUpData]=useState(null) // {newLevel}
   const prevLevel=useRef(sheet.level)
 
+  // DM readonly view: always fetch live sheet from server
+  useEffect(()=>{
+    if(!readOnly||!IS_SERVER) return
+    api('GET',`sheet/${campaignId}/${encodeURIComponent(playerName)}`).then(r=>{
+      if(r.ok&&r.sheet){
+        save(`tome_sheet_${campaignId}_${playerName}`,r.sheet)
+        setSheet(r.sheet)
+      }
+    }).catch(()=>{})
+  },[campaignId,playerName])
+
   function upd(f,v){
     if(readOnly)return
     setSheet(s=>{
@@ -2572,7 +2583,13 @@ function PlayersTab({ campaign }) {
   const playerKey=players.sort().join(',')
 
   useEffect(()=>{
-    Storage.getPlayersWithSheets(campaign.id).then(s=>setSheets(s||{}))
+    function fetchSheets(){
+      Storage.getPlayersWithSheets(campaign.id).then(s=>{ if(s) setSheets(s) })
+    }
+    fetchSheets()
+    if(!IS_SERVER) return
+    const t=setInterval(fetchSheets,10000)
+    return ()=>clearInterval(t)
   },[campaign.id, playerKey])
 
   if(viewing) return (
