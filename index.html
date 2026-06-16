@@ -655,6 +655,34 @@ h1,h2,h3,h4{font-family:'Cinzel',serif;color:var(--gold)}
 
   /* Encounter combatant row */
   .combatant-stats{flex-wrap:wrap;gap:.4rem}
+
+  /* Dice roller: stack vertically in portrait */
+  .dice-roller-layout{flex-direction:column}
+  .dice-log-panel{width:100%;border-left:none;border-top:1px solid rgba(201,168,76,.2);max-height:260px}
+  .dice-tray{overflow-y:auto;padding:.75rem}
+  .dice-3d-area{min-height:90px;padding:.75rem}
+  .die-face svg,.die-face{width:48px;height:48px}
+  .die-widget{min-width:72px;padding:.4rem .5rem}
+  .roll-result-big{font-size:1.8rem}
+
+  /* Players grid: single column, stack buttons */
+  .players-grid{grid-template-columns:1fr!important}
+  .player-card .flex.gap-2{flex-direction:column}
+  .player-card .flex.gap-2 .btn{width:100%}
+
+  /* Topbar: hide secondary text, shrink actions */
+  .topbar-actions .btn-ghost{font-size:.6rem;padding:.3rem .5rem}
+
+  /* Encounter sidebar controls: wrap buttons */
+  .encounter-sidebar .flex.gap-2{flex-wrap:wrap}
+  .encounter-sidebar .btn{font-size:.7rem;padding:.35rem .55rem}
+
+  /* Campaign header: tighter */
+  .campaign-header{gap:.35rem}
+  .campaign-header h2{font-size:.82rem}
+
+  /* Tab btn: even smaller on narrow screens */
+  .tab-btn{font-size:.62rem;padding:.5rem .55rem;letter-spacing:.02em}
 }
 
 /* Safe area insets for notched phones */
@@ -3316,7 +3344,7 @@ function DiceRollerTab({ campaignId, rollerName, isDM }) {
       api('GET',`dice/${campaignId}`).then(r=>{ if(r.ok) setLog(r.rolls||[]) }).catch(()=>{})
     }
     fetchLog()
-    const t=setInterval(fetchLog,3000)
+    const t=setInterval(fetchLog,1500)
     return ()=>clearInterval(t)
   },[campaignId])
 
@@ -3353,6 +3381,15 @@ function DiceRollerTab({ campaignId, rollerName, isDM }) {
     setCurrentRoll(roll)
     setDoneCount(0)
     setRolling(true)
+    // Push to server immediately so other players see it right away
+    const entry = {roller:rollerName,isDM,hidden:isDM&&hidden,dice,total,isD20Multi,ts:Date.now()/1000}
+    if(IS_SERVER){
+      api('POST',`dice/${campaignId}`,entry).then(r=>{
+        if(r.ok) api('GET',`dice/${campaignId}`).then(r2=>{ if(r2.ok) setLog(r2.rolls||[]) }).catch(()=>{})
+      }).catch(()=>{})
+    } else {
+      setLog(l=>[...l,entry])
+    }
   }
 
   const totalDice = diceSet.reduce((s,d)=>s+d.count,0)
@@ -3360,25 +3397,7 @@ function DiceRollerTab({ campaignId, rollerName, isDM }) {
   useEffect(()=>{
     if(!rolling||!currentRoll) return
     if(doneCount < totalDice) return
-    // All dice finished animating — push to server
     setRolling(false)
-    if(IS_SERVER){
-      const entry = {
-        roller: rollerName,
-        isDM,
-        hidden: currentRoll.hidden,
-        dice: currentRoll.dice,
-        total: currentRoll.total,
-        isD20Multi: currentRoll.isD20Multi,
-        ts: Date.now()/1000,
-      }
-      api('POST',`dice/${campaignId}`,entry).then(()=>{
-        api('GET',`dice/${campaignId}`).then(r=>{ if(r.ok) setLog(r.rolls||[]) })
-      }).catch(()=>{})
-    } else {
-      const entry = {roller:rollerName,isDM,hidden:currentRoll.hidden,dice:currentRoll.dice,total:currentRoll.total,isD20Multi:currentRoll.isD20Multi,ts:Date.now()/1000}
-      setLog(l=>[...l,entry])
-    }
   },[doneCount, rolling, currentRoll, totalDice])
 
   function revealRoll(idx){
