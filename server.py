@@ -213,6 +213,14 @@ class Handler(BaseHTTPRequestHandler):
                     result[pname] = p.get('characterSheet', empty_sheet(pname))
             return self.ok({'ok': True, 'players': result})
 
+        if api.startswith('dice/'):
+            cid = api[5:]
+            camp = d['campaigns'].get(cid)
+            if camp is None:
+                return self.err('Campaign not found', 404)
+            rolls = camp.get('diceLog', [])
+            return self.ok({'ok': True, 'rolls': rolls})
+
         self.err('Unknown endpoint', 404)
 
     def do_POST(self):
@@ -330,6 +338,22 @@ class Handler(BaseHTTPRequestHandler):
                     dump(d)
                     return self.ok({'ok': True})
                 return self.err('Player not found — join the campaign first', 404)
+
+        if api.startswith('dice/'):
+            cid = api[5:]
+            camp = d['campaigns'].get(cid)
+            if camp is None:
+                return self.err('Campaign not found', 404)
+            roll = b  # {roller, isDM, hidden, dice, results, total, ts}
+            roll['ts'] = roll.get('ts') or time.time()
+            if 'diceLog' not in camp:
+                camp['diceLog'] = []
+            camp['diceLog'].append(roll)
+            # Keep last 200 rolls
+            camp['diceLog'] = camp['diceLog'][-200:]
+            d['campaigns'][cid] = camp
+            dump(d)
+            return self.ok({'ok': True, 'roll': roll})
 
         self.err('Unknown endpoint', 404)
 
