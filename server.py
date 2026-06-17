@@ -159,6 +159,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', MIME.get(target.suffix, 'application/octet-stream'))
             self.send_header('Content-Length', len(data))
+            self.send_header('Cache-Control', 'no-store')
             self.end_headers()
             self.wfile.write(data)
         else:
@@ -166,6 +167,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', len(idx))
+            self.send_header('Cache-Control', 'no-store')
             self.end_headers()
             self.wfile.write(idx)
 
